@@ -24,8 +24,8 @@ class Table extends Model{
     protected $table = 'tables';
     protected $guarded = ['id'];
 
-    public function department():HasOne{
-        return $this->hasOne(Department::class, 'id', 'department_id');
+    public function department():BelongsTo{
+        return $this->belongsTo(Department::class, 'department_id', 'id');
     }
 
     public function worker():BelongsTo{

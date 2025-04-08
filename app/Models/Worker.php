@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
@@ -23,9 +24,9 @@ class Worker extends Model{
     protected $table = 'workers';
     protected $guarded = ['id'];
 
-    public function department():HasOne
+    public function department():BelongsTo
     {
-        return $this->hasOne(Department::class, 'id', 'department_id');
+        return $this->belongsTo(Department::class, 'department_id', 'id');
     }
 
     public function table():HasOne
