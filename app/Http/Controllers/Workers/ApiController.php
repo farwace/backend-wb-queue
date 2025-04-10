@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Workers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\QueueResource;
 use App\Http\Traits\RespondsWithHttpStatus;
 use App\Models\Queue;
 use App\Models\Table;
@@ -162,6 +163,11 @@ class ApiController extends Controller
     }
 
 
+    public function getQueue():JsonResponse
+    {
+        $queue = Queue::query()->where('is_closed', false)->orderBy('id', 'desc')->get();
+        return $this->success(QueueResource::collection($queue), 'Success');
+    }
 
 
     public function getTables()
