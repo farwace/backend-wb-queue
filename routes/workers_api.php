@@ -10,4 +10,5 @@ Route::prefix('v1.0')->group(function (){
     Route::post('/select-table', [ApiController::class, 'selectTable']);
     Route::post('/enter-queue', [ApiController::class, 'enterQueue']);
     Route::post('/receive-item', [ApiController::class, 'receiveItem']);
+    Route::post('/leave-table', [ApiController::class, 'leaveTable']);
 });

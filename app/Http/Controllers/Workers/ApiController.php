@@ -60,6 +60,28 @@ class ApiController extends Controller
 
     }
 
+    public function leaveTable(Request $request): JsonResponse
+    {
+        $badgeCode = $request->headers->get('badge-code');
+        if(empty($badgeCode) || !is_numeric($badgeCode)){
+            return $this->failure('Не удалось корректно обработать код сотрудника', 422);
+        }
+        $worker = Worker::query()->where('code', $badgeCode)->first();
+        if(!$worker){
+            return $this->failure('Сотрудник не найден!', 422);
+        }
+        $table = Table::query()->where('worker_id', $worker->id)->first();
+        if(!empty($table)){
+            $queue = Queue::query()->where('table_id', $table->id)->where('worker_id', $worker->id)->where('is_closed', false)->first();
+            if($queue){
+                $queue->is_closed = true;
+                $queue->save();
+            }
+            $table->worker_id = null;
+            $table->save();
+        }
+        return $this->success([], 'Success');
+    }
     public function selectTable(Request $request): JsonResponse
     {
         $arRequest = $request->toArray();
