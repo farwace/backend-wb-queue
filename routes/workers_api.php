@@ -12,4 +12,5 @@ Route::prefix('v1.0')->group(function (){
     Route::post('/receive-item', [ApiController::class, 'receiveItem']);
     Route::post('/leave-table', [ApiController::class, 'leaveTable']);
     Route::get('/queue', [ApiController::class, 'getQueue']);
+    Route::get('/unavailable-tables', [ApiController::class, 'getUnavailableTables']);
 });

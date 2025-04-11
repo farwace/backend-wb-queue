@@ -9,8 +9,10 @@ use App\Http\Traits\RespondsWithHttpStatus;
 use App\Models\Queue;
 use App\Models\Table;
 use App\Models\Worker;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ApiController extends Controller
 {
@@ -176,6 +178,25 @@ class ApiController extends Controller
     {
         $queue = Queue::query()->where('is_closed', false)->orderBy('id', 'desc')->get();
         return $this->success(QueueResource::collection($queue), 'Success');
+    }
+
+    public function getUnavailableTables():JsonResponse
+    {
+        $fiveHoursAgo = Carbon::now()->subHours(5);
+
+
+        $subQuery = Queue::select(DB::raw('MAX(id) as id'))
+            ->where('created_at', '>=', $fiveHoursAgo)
+            ->groupBy('worker_id', 'table_id');
+
+
+        $queues = Queue::whereIn('id', $subQuery)
+            ->with(['worker', 'table'])
+            ->orderByDesc('id')
+            ->get();
+
+
+        return response()->json($queues);
     }
 
 
