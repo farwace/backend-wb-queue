@@ -41,9 +41,9 @@
 
                     loadItems();
 
-                    const now = new Date();
                     const orderItems = computed(() => {
                         return [...items.value].sort((a, b) => new Date(a.updated_at) - new Date(b.updated_at)).map((item) => {
+                            const now = new Date();
                             const updatedAt = new Date(item.updated_at);
                             const diffMs = now - updatedAt;
 
@@ -52,8 +52,13 @@
                             const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
                             //const seconds = String(totalSeconds % 60).padStart(2, '0');
 
-                            item.timer = `${hours}:${minutes}`;
-                            item.isRed = diffMs > 9000000;
+                            // item.timer = `${hours}:${minutes}:${seconds}`;
+                            // item.isRed = diffMs > 9000000;
+                            return {
+                                ...item,
+                                timer: `${hours}:${minutes}`,
+                                isRed: diffMs > 9000000,
+                            }
                             return item;
                         });
                     })
