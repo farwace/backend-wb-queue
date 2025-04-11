@@ -45,10 +45,13 @@
                     const orderItems = computed(() => {
                         return [...items.value].sort((a, b) => new Date(a.updated_at) - new Date(b.updated_at)).map((item) => {
                             const updatedAt = new Date(item.updated_at);
-                            const diffMs = now - updatedAt; // разница в миллисекундах
-                            const diffMins = Math.floor(diffMs / 60000); // разница в минутах
-                            const hours = String(Math.floor(diffMins / 60)).padStart(2, '0');
-                            const minutes = String(diffMins % 60).padStart(2, '0');
+                            const diffMs = now - updatedAt;
+
+                            const totalSeconds = Math.floor(diffMs / 1000);
+                            const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+                            const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+                            //const seconds = String(totalSeconds % 60).padStart(2, '0');
+
                             item.timer = `${hours}:${minutes}`;
                             item.isRed = diffMs > 9000000;
                             return item;
