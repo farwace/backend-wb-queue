@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Workers;
 
+use App\Events\OrderRequested;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\QueueResource;
 use App\Http\Traits\RespondsWithHttpStatus;
@@ -140,6 +141,9 @@ class ApiController extends Controller
 
         $arWorkerInfo['inQueue'] = true;
 
+        event(new OrderRequested($worker->table->id, false, $worker->table->code, $worker->table->name, $worker->name));
+        //OrderRequested::dispatch($queue->id, false, $worker->table->code, $worker->table->name, $worker->name);
+
         return $this->success($arWorkerInfo, 'Success');
     }
 
@@ -157,6 +161,11 @@ class ApiController extends Controller
 
         $tableId = $worker->table->id;
 
+        $queue = Queue::query()->where('table_id', $tableId)->where('worker_id', $worker->id)->where('is_closed', false)->orderBy('id', 'desc')->first();
+        if($queue){
+            event(new OrderRequested($worker->table->id, true, $worker->table->code, $worker->table->name, $worker->name));
+            //OrderRequested::dispatch($queue->id, true, $worker->table->code, $worker->table->name, $worker->name);
+        }
         Queue::query()->where('table_id', $tableId)->where('worker_id', $worker->id)->update(['is_closed' => true]);
 
         return $this->success($this->workerInfo($worker), 'Success');
