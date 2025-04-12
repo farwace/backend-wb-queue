@@ -1,6 +1,7 @@
 @basset('/assets/jquery.min.js')
 @basset('/assets/popper.min.js')
 @basset('/assets/noty.min.js')
+@basset('/assets/sweetalert.min.js')
 
 @if (backpack_theme_config('scripts') && count(backpack_theme_config('scripts')))
     @foreach (backpack_theme_config('scripts') as $path)
