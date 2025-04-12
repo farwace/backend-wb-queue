@@ -7,8 +7,8 @@
         <div class="queue">
             <template v-for="item in orderItems" :key="item.table.id + '-' + item.worker.id">
                 <div class="item" :class="{fire:item.isRed}">
-                    <div> @{{ item.table.name }} </div>
-                    <div> @{{ item.worker.name }} </div>
+                    <div class="small"> @{{ item.table.name }}  @{{ item.worker.name }} </div>
+                    <div> @{{ item.worker.code }} </div>
                     <small> @{{ item.timer }} </small>
                 </div>
             </template>
