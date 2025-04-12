@@ -29,7 +29,7 @@
                             url: '/api/worker/v1.0/unavailable-tables',
                             type: 'GET',
                             success: function (res){
-                                if(res.length && Array.isArray(res)){
+                                if(Array.isArray(res)){
                                     items.value = res;
                                 }
                             }

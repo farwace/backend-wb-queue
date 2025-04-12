@@ -184,19 +184,28 @@ class ApiController extends Controller
     {
         $fiveHoursAgo = Carbon::now()->subHours(5);
 
-
+        // Подзапрос: взять последние закрытые заявки (по максимальному ID) по worker_id + table_id
         $subQuery = Queue::select(DB::raw('MAX(id) as id'))
+            ->where('is_closed', true)
             ->where('created_at', '>=', $fiveHoursAgo)
             ->groupBy('worker_id', 'table_id');
 
+        // ID этих закрытых записей
+        $lastClosedIds = Queue::whereIn('id', $subQuery)->pluck('id');
 
-        $queues = Queue::whereIn('id', $subQuery)
-            ->with(['worker', 'table'])
-            ->orderByDesc('id')
-            ->get();
+        // Вытащим эти записи
+        $lastClosedQueues = Queue::whereIn('id', $lastClosedIds)->with(['worker', 'table'])->get();
 
+        // Отфильтруем те, у которых НЕТ более новой открытой записи
+        $filtered = $lastClosedQueues->filter(function ($queue) {
+            return !Queue::where('worker_id', $queue->worker_id)
+                ->where('table_id', $queue->table_id)
+                ->where('id', '>', $queue->id)
+                ->where('is_closed', false)
+                ->exists();
+        })->values();
 
-        return response()->json($queues);
+        return response()->json($filtered);
     }
 
 
