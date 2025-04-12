@@ -23,7 +23,7 @@ class ApiController extends Controller
     {
 
         $badgeCode = $request->headers->get('badge-code');
-        if(empty($badgeCode) || !is_numeric($badgeCode)){
+        if(empty($badgeCode) || !is_numeric($badgeCode) || strlen($badgeCode) > 7){
             return $this->failure('Не удалось корректно обработать код сотрудника', 422);
         }
         /** @var ?Worker $worker */
