@@ -27,6 +27,7 @@ services:
             - pgsql
             - redis
             - memcached
+        restart: unless-stopped
     pgsql:
         image: 'postgres:17'
         ports:
@@ -52,6 +53,7 @@ services:
                 - '${DB_USERNAME}'
             retries: 3
             timeout: 5s
+        restart: unless-stopped
     redis:
         image: 'redis:alpine'
         ports:
@@ -67,12 +69,14 @@ services:
                 - ping
             retries: 3
             timeout: 5s
+        restart: unless-stopped
     memcached:
         image: 'memcached:alpine'
         ports:
             - '${FORWARD_MEMCACHED_PORT:-11211}:11211'
         networks:
             - sail
+        restart: unless-stopped
 networks:
     sail:
         driver: bridge
