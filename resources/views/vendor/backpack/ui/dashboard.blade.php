@@ -22,6 +22,7 @@
             const app = createApp({
                 setup: () => {
                     const items = ref([]);
+                    const now = ref(new Date());
 
                     const loadItems = () => {
                         $.ajax({
@@ -36,6 +37,10 @@
                     }
 
                     setInterval(() => {
+                        now.value = new Date();
+                    }, 1000)
+
+                    setInterval(() => {
                         loadItems();
                     }, 15000)
 
@@ -43,9 +48,9 @@
 
                     const orderItems = computed(() => {
                         return [...items.value].sort((a, b) => new Date(a.updated_at) - new Date(b.updated_at)).map((item) => {
-                            const now = new Date();
+
                             const updatedAt = new Date(item.updated_at);
-                            const diffMs = now - updatedAt;
+                            const diffMs = now.value - updatedAt;
 
                             const totalSeconds = Math.floor(diffMs / 1000);
                             const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
@@ -59,7 +64,6 @@
                                 timer: `${hours}:${minutes}:${seconds}`,
                                 isRed: diffMs > 9000000,
                             }
-                            return item;
                         });
                     })
 
