@@ -180,29 +180,37 @@ class ApiController extends Controller
         return $this->success(QueueResource::collection($queue), 'Success');
     }
 
-    public function getUnavailableTables():JsonResponse
+    public function getUnavailableTables(): JsonResponse
     {
         $fiveHoursAgo = Carbon::now()->subHours(5);
 
-        // Подзапрос: взять последние закрытые заявки (по максимальному ID) по worker_id + table_id
+        // Подзапрос: последние закрытые записи по (worker_id, table_id)
         $subQuery = Queue::select(DB::raw('MAX(id) as id'))
             ->where('is_closed', true)
             ->where('created_at', '>=', $fiveHoursAgo)
             ->groupBy('worker_id', 'table_id');
 
-        // ID этих закрытых записей
-        $lastClosedIds = Queue::whereIn('id', $subQuery)->pluck('id');
+        // Вытащим записи с этими ID
+        $lastClosedQueues = Queue::whereIn('id', $subQuery)
+            ->with(['worker', 'table']) // подгружаем связи
+            ->get();
 
-        // Вытащим эти записи
-        $lastClosedQueues = Queue::whereIn('id', $lastClosedIds)->with(['worker', 'table'])->get();
-
-        // Отфильтруем те, у которых НЕТ более новой открытой записи
+        // Фильтруем:
         $filtered = $lastClosedQueues->filter(function ($queue) {
-            return !Queue::where('worker_id', $queue->worker_id)
+            // Исключаем, если есть более новая открытая запись
+            $hasNewOpen = Queue::where('worker_id', $queue->worker_id)
                 ->where('table_id', $queue->table_id)
                 ->where('id', '>', $queue->id)
                 ->where('is_closed', false)
                 ->exists();
+
+            if ($hasNewOpen) {
+                return false;
+            }
+
+            // И дополнительно проверяем соответствие связанной таблицы
+            $table = $queue->table;
+            return $table && $table->worker_id === $queue->worker_id;
         })->values();
 
         return response()->json($filtered);
