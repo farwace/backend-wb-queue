@@ -11,6 +11,7 @@ class QueueResource extends JsonResource{
             'workerName' => $this->worker->name,
             'tableName' => $this->table->name,
             'tableCode' => $this->table->code,
+            'timestamp' => $this->updated_at
         ];
     }
 }

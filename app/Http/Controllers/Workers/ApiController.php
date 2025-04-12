@@ -143,7 +143,7 @@ class ApiController extends Controller
 
         $arWorkerInfo['inQueue'] = true;
 
-        event(new OrderRequested($worker->table->id, false, $worker->table->code, $worker->table->name, $worker->name));
+        event(new OrderRequested($worker->table->id, false, $worker->table->code, $worker->table->name, $worker->name, $queue->updated_at));
         //OrderRequested::dispatch($queue->id, false, $worker->table->code, $worker->table->name, $worker->name);
 
         return $this->success($arWorkerInfo, 'Success');
@@ -165,7 +165,7 @@ class ApiController extends Controller
 
         $queue = Queue::query()->where('table_id', $tableId)->where('worker_id', $worker->id)->where('is_closed', false)->orderBy('id', 'desc')->first();
         if($queue){
-            event(new OrderRequested($worker->table->id, true, $worker->table->code, $worker->table->name, $worker->name));
+            event(new OrderRequested($worker->table->id, true, $worker->table->code, $worker->table->name, $worker->name, $queue->updated_at));
             //OrderRequested::dispatch($queue->id, true, $worker->table->code, $worker->table->name, $worker->name);
         }
         Queue::query()->where('table_id', $tableId)->where('worker_id', $worker->id)->update(['is_closed' => true]);
@@ -176,7 +176,7 @@ class ApiController extends Controller
 
     public function getQueue():JsonResponse
     {
-        $queue = Queue::query()->where('is_closed', false)->orderBy('id', 'desc')->get();
+        $queue = Queue::query()->where('is_closed', false)->orderBy('id', 'asc')->get();
         return $this->success(QueueResource::collection($queue), 'Success');
     }
 
