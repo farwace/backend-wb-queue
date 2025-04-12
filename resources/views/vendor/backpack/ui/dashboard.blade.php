@@ -50,13 +50,13 @@
                             const totalSeconds = Math.floor(diffMs / 1000);
                             const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
                             const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
-                            //const seconds = String(totalSeconds % 60).padStart(2, '0');
+                            const seconds = String(totalSeconds % 60).padStart(2, '0');
 
                             // item.timer = `${hours}:${minutes}:${seconds}`;
                             // item.isRed = diffMs > 9000000;
                             return {
                                 ...item,
-                                timer: `${hours}:${minutes}`,
+                                timer: `${hours}:${minutes}:${seconds}`,
                                 isRed: diffMs > 9000000,
                             }
                             return item;
