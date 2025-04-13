@@ -10,11 +10,11 @@ use Illuminate\Support\Str;
 class TablesSeeder extends Seeder{
     public function run()
     {
-        for ($i = 4; $i <= 80; $i++){
+        for ($i = 1; $i <= 112; $i++){
             DB::table('tables')->insertOrIgnore([
                 'name' => ''. $i . ' стол',
                 'code' => ''.$i . ' стол',
-                'department_id' => 1,
+                'department_id' => 2,
                 'worker_id' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
