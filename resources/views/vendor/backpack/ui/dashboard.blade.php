@@ -3,13 +3,20 @@
 
 @section('content')
     <div id="appRoot">
-        <template v-if="checkTables && checkTables.length > 0">
+        <template v-if="currentDepartment?.name">
+            <h2>
+                @{{ currentDepartment?.name }}
+                <button class="btn btn-secondary" type="button" @click="setDepartment(0)">Назад</button>
+            </h2>
+        </template>
+        <template v-if="cCheckTables && cCheckTables.length > 0">
             <h2>Проверить стол (сотрудник нажал выход)</h2>
             <div class="queue small mb-6">
-                <template v-for="item in checkTables" :key="item.id + '-' + item.code">
+                <template v-for="item in cCheckTables" :key="item.id + '-' + item.code">
                     <div class="item blue">
                         <small class="small"> @{{ item.name }}  @{{ item.workerName.slice(0,15) }} </small>
                         <div><small> @{{ item.workerCode }} </small></div>
+                        <div><small v-if="item.time"> @{{ item.time }} </small></div>
                         <button class="btn btn-secondary" type="button" @click="sendChecked(item.id)">Проверено!</button>
                     </div>
                 </template>
@@ -17,10 +24,6 @@
         </template>
         <h2>
             Рабочее пространство
-            <template v-if="currentDepartment?.name">
-                @{{ ' ' + currentDepartment?.name }}
-                <button class="btn btn-secondary" type="button" @click="setDepartment(0)">Сбросить</button>
-            </template>
         </h2>
         <template v-if="departmentId < 1">
             <h2>Выберите направление:</h2>
@@ -145,10 +148,25 @@
                         })?.[0] || undefined
                     })
 
+                    const cCheckTables = computed(() => {
+                        return checkTables.value.map((i) => {
+                            i.time = '';
+                            if(i.timestamp){
+                                const date = new Date(i.timestamp)
+                                i.time = date.toLocaleTimeString('ru-RU', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: false
+                                });
+                            }
+                            return i;
+                        })
+                    })
+
                     return {
                         items,
                         orderItems,
-                        checkTables,
+                        cCheckTables,
                         sendChecked,
                         departmentId,
                         setDepartment,
