@@ -58,6 +58,12 @@ class QueueCrudController extends CrudController
             'type' => 'text',
         ]);
         $this->crud->addColumn([
+            'name' => 'table.department.name',
+            'label' => 'Направление',
+            'type' => 'text',
+        ]);
+
+        $this->crud->addColumn([
             'name' => 'worker.name',
             'label' => 'Сотрудник',
             'type' => 'text',
