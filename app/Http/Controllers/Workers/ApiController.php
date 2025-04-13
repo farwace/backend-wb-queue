@@ -213,6 +213,9 @@ class ApiController extends Controller
 
         $queue = Queue::query()->where('table_id', $tableId)->where('worker_id', $worker->id)->where('is_closed', false)->orderBy('id', 'desc')->first();
         if($queue){
+            if(abs(Carbon::now()->diffInSeconds($queue->created_at)) < 20){
+                return $this->failure('Замечена подозрительная активность! При повторе информация будет отправлена старшему!', 422);
+            }
             event(new OrderRequested($worker->table->department->code, $worker->table->id, true, $worker->table->code, $worker->table->name, $worker->name, $queue->updated_at));
             //OrderRequested::dispatch($queue->id, true, $worker->table->code, $worker->table->name, $worker->name);
         }
