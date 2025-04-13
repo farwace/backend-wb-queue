@@ -19,6 +19,7 @@ use function Psy\debug;
  * @property int $table_id
  * @property Worker $worker
  * @property Table $table
+ * @property string $color
  */
 class Queue extends Model{
     use CrudTrait;

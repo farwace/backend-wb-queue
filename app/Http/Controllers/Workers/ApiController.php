@@ -6,6 +6,7 @@ use App\Events\OrderRequested;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\QueueResource;
 use App\Http\Traits\RespondsWithHttpStatus;
+use App\Models\LoadersSettings;
 use App\Models\Queue;
 use App\Models\Table;
 use App\Models\Worker;
@@ -14,6 +15,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use function Psy\debug;
 
 class ApiController extends Controller
 {
@@ -146,8 +148,20 @@ class ApiController extends Controller
         if(!empty($arWorkerInfo['inQueue'])){
             return $this->failure('Вы уже на очереди!', 422);
         }
-
+        $loaderSettings = LoadersSettings::query()->where('active', true)->orderBy('id', 'asc')->pluck('color')->toArray();
+        $lastKey = (int)Cache::get('loaderIndex', 0);
+        if(!$loaderSettings){
+            $loaderSettings = ['#000000'];
+        }
+        $lastKey +=1;
+        if($lastKey >= (count($loaderSettings))){
+            $lastKey = 0;
+        }
+        Cache::put('loaderIndex', $lastKey);
         $queue = new Queue();
+        if(!empty($loaderSettings[$lastKey])){
+            $queue->color = $loaderSettings[$lastKey];
+        }
         $queue->table_id = $tableId;
         $queue->worker_id = $worker->id;
         $queue->is_closed = false;
@@ -155,7 +169,7 @@ class ApiController extends Controller
 
         $arWorkerInfo['inQueue'] = true;
 
-        event(new OrderRequested($worker->table->id, false, $worker->table->code, $worker->table->name, $worker->name, $queue->updated_at));
+        event(new OrderRequested($worker->table->id, false, $worker->table->code, $worker->table->name, $worker->name, $queue->updated_at, $queue->color));
         //OrderRequested::dispatch($queue->id, false, $worker->table->code, $worker->table->name, $worker->name);
 
         return $this->success($arWorkerInfo, 'Success');
