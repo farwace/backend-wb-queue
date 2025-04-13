@@ -165,7 +165,12 @@ class ApiController extends Controller
         if(!empty($arWorkerInfo['inQueue'])){
             return $this->failure('Вы уже на очереди!', 422);
         }
-        $loaderSettings = LoadersSettings::query()->where('active', true)->orderBy('id', 'asc')->pluck('color')->toArray();
+        $loaderSettings = LoadersSettings::query()
+            ->where('active', true)
+            ->where('department_id', $worker->table->department_id)
+            ->orderBy('id', 'asc')
+            ->pluck('color')
+            ->toArray();
         $lastKey = (int)Cache::get('loaderIndex', 0);
         if(!$loaderSettings){
             $loaderSettings = ['#000000'];

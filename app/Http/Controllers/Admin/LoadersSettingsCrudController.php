@@ -57,6 +57,12 @@ class LoadersSettingsCrudController extends CrudController
             'type' => 'boolean',
             'label' => 'Активность',
         ]);
+        $this->crud->addColumn([
+            'name' => 'department.name',
+            'type' => 'text',
+            'label' => 'Направление',
+        ]);
+
     }
 
     protected function setupShowOperation()
@@ -76,6 +82,14 @@ class LoadersSettingsCrudController extends CrudController
             'type' => 'boolean',
             'label' => 'Активность',
             'default' => true
+        ]);
+        $this->crud->addField([
+            'name' => 'department_id',
+            'label' => 'Направление',
+            'type' => 'select',
+            'entity' => 'department',
+            'attribute' => 'name',
+            'model' => Department::class,
         ]);
     }
 
