@@ -70,10 +70,21 @@ class TablesCrudController extends CrudController
             'label' => 'Занят',
             'searchLogic' => function ($query, $column, $searchTerm) {
                 $query->orWhereHas('worker', function ($query) use ($column, $searchTerm) {
-                    $query->where('name', 'like', '%' . $searchTerm . '%')->orWhere('code', 'like', '%' . $searchTerm . '%');
+                    $query->where('name', 'like', '%' . $searchTerm . '%');
                 });
             }
         ]);
+        $this->crud->addColumn([
+            'name' => 'worker.code',
+            'type' => 'text',
+            'label' => 'Занят',
+            'searchLogic' => function ($query, $column, $searchTerm) {
+                $query->orWhereHas('worker', function ($query) use ($column, $searchTerm) {
+                    $query->where('code', 'like', '%' . $searchTerm . '%');
+                });
+            }
+        ]);
+
         $this->crud->addColumn([
             'name' => 'department.name',
             'type' => 'text',
