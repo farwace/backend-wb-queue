@@ -10,6 +10,7 @@
                     <div class="item blue">
                         <small class="small"> @{{ item.name }}  @{{ item.workerName.slice(0,15) }} </small>
                         <div><small> @{{ item.workerCode }} </small></div>
+                        <button class="btn btn-secondary" type="button" @click="sendChecked(item.id)">Проверено!</button>
                     </div>
                 </template>
             </div>
@@ -84,10 +85,26 @@
                         });
                     })
 
+                    const sendChecked = (tableId) => {
+                        $.ajax({
+                            url: '/api/worker/v1.0/check-table',
+                            type: 'POST',
+                            data: {
+                                table_id: tableId
+                            },
+                            success: function (res){
+                                checkTables.value = checkTables.value.filter((i) => {
+                                    return i.id != tableId;
+                                })
+                            }
+                        })
+                    }
+
                     return {
                         items,
                         orderItems,
-                        checkTables
+                        checkTables,
+                        sendChecked
                     }
                 }
             });
