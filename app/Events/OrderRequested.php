@@ -16,7 +16,7 @@ class OrderRequested implements ShouldBroadcastNow
     /**
      * Create a new event instance.
      */
-    public function __construct(public int $id, public bool $isClosed, public string $tableCode, public string $tableName, public string $workerName, public ?\DateTime $timestamp, public ?string $color = '')
+    public function __construct(public string $directionCode, public int $id, public bool $isClosed, public string $tableCode, public string $tableName, public string $workerName, public ?\DateTime $timestamp, public ?string $color = '')
     {
         //
     }
@@ -52,6 +52,6 @@ class OrderRequested implements ShouldBroadcastNow
 
     public function broadcastAs(): string
     {
-        return 'order.requested';
+        return 'order.requested.' . $this->directionCode;
     }
 }

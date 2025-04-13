@@ -44,6 +44,7 @@ class DepartmentsCrudController extends CrudController
      */
     protected function setupListOperation()
     {
+        $this->crud->removeButton('delete');
         $this->crud->column('id')->type('number')->label('#');
 
         $this->crud->addColumn([

@@ -6,6 +6,7 @@ use App\Events\OrderRequested;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\QueueResource;
 use App\Http\Traits\RespondsWithHttpStatus;
+use App\Models\Department;
 use App\Models\LoadersSettings;
 use App\Models\Queue;
 use App\Models\Table;
@@ -15,7 +16,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
-use function Psy\debug;
 
 class ApiController extends Controller
 {
@@ -24,19 +24,30 @@ class ApiController extends Controller
 
     public function auth(Request $request): JsonResponse
     {
+        $arRequest = $request->toArray();
+        $direction = $arRequest['direction'];
 
         $badgeCode = $request->headers->get('badge-code');
         if(empty($badgeCode) || !is_numeric($badgeCode) || strlen($badgeCode) > 7){
             return $this->failure('Не удалось корректно обработать код сотрудника', 422);
         }
+
+        $department = Department::query()->where('code', $direction)->first();
+        if(!$department){
+            return $this->failure('Не удалось определить направление. Обновите страницу и попробуйте еще раз', 422);
+        }
+
         /** @var ?Worker $worker */
         $worker = Worker::query()->where('code', $badgeCode)->first();
+        $worker->department_id = $department->id;
+
         if(!$worker){
             $worker = new Worker();
             $worker->code = $badgeCode;
             $worker->name = '';
-            $worker->save();
+            $worker->department_id = $department->id;
         }
+        $worker->save();
 
         return $this->success($this->workerInfo($worker), 'Success');
 
@@ -74,6 +85,8 @@ class ApiController extends Controller
             return $this->failure('Не удалось корректно обработать код сотрудника', 422);
         }
         $worker = Worker::query()->where('code', $badgeCode)->first();
+        $worker->department_id = null;
+        $worker->save();
         if(!$worker){
             return $this->failure('Сотрудник не найден!', 422);
         }
@@ -103,6 +116,7 @@ class ApiController extends Controller
     public function selectTable(Request $request): JsonResponse
     {
         $arRequest = $request->toArray();
+        $direction = $arRequest['direction'];
 
         $badgeCode = $request->headers->get('badge-code');
         if(empty($badgeCode) || !is_numeric($badgeCode)){
@@ -132,6 +146,9 @@ class ApiController extends Controller
 
     public function enterQueue(Request $request): JsonResponse
     {
+        $arRequest = $request->toArray();
+        $direction = $arRequest['direction'];
+
         $badgeCode = $request->headers->get('badge-code');
         if(empty($badgeCode) || !is_numeric($badgeCode)){
             return $this->failure('Не удалось корректно обработать код сотрудника', 422);
@@ -169,7 +186,7 @@ class ApiController extends Controller
 
         $arWorkerInfo['inQueue'] = true;
 
-        event(new OrderRequested($worker->table->id, false, $worker->table->code, $worker->table->name, $worker->name, $queue->updated_at, $queue->color));
+        event(new OrderRequested($worker->table->department->code, $worker->table->id, false, $worker->table->code, $worker->table->name, $worker->name, $queue->updated_at, $queue->color));
         //OrderRequested::dispatch($queue->id, false, $worker->table->code, $worker->table->name, $worker->name);
 
         return $this->success($arWorkerInfo, 'Success');
@@ -191,7 +208,7 @@ class ApiController extends Controller
 
         $queue = Queue::query()->where('table_id', $tableId)->where('worker_id', $worker->id)->where('is_closed', false)->orderBy('id', 'desc')->first();
         if($queue){
-            event(new OrderRequested($worker->table->id, true, $worker->table->code, $worker->table->name, $worker->name, $queue->updated_at));
+            event(new OrderRequested($worker->table->department->code, $worker->table->id, true, $worker->table->code, $worker->table->name, $worker->name, $queue->updated_at));
             //OrderRequested::dispatch($queue->id, true, $worker->table->code, $worker->table->name, $worker->name);
         }
         Queue::query()->where('table_id', $tableId)->where('worker_id', $worker->id)->update(['is_closed' => true]);
@@ -200,13 +217,17 @@ class ApiController extends Controller
     }
 
 
-    public function getQueue():JsonResponse
+    public function getQueue(?string $direction = 'e1'):JsonResponse
     {
-        $queue = Queue::query()->where('is_closed', false)->orderBy('id', 'asc')->get();
+        $queue = Queue::query()->where('is_closed', false)
+            ->whereHas('table.department', function ($query) use ($direction) {
+                $query->where('code', $direction);
+            })
+            ->orderBy('id', 'asc')->get();
         return $this->success(QueueResource::collection($queue), 'Success');
     }
 
-    public function getUnavailableTables(): JsonResponse
+    public function getUnavailableTables(?string $direction = 'e1'): JsonResponse
     {
         $fiveHoursAgo = Carbon::now()->subHours(5);
 
@@ -257,13 +278,20 @@ class ApiController extends Controller
     }
 
 
-    public function getTables()
+    public function getTables(int $departmentId)
     {
-        return Table::query()->whereNull('worker_id')->orderBy('code', 'asc')->get()->toArray();
+        return Table::query()
+            ->whereNull('worker_id')
+            ->where('department_id', $departmentId)
+            ->orderBy('code', 'asc')
+            ->get()
+            ->toArray();
     }
 
     public function workerInfo($worker): array
     {
+        $departmentId = $worker->department_id ?: 1;
+
         $table = $worker->table;
         $inQueue = false;
         if(!empty($table)){
@@ -274,7 +302,7 @@ class ApiController extends Controller
                 $inQueue = true;
             }
         }
-        $arResult = array_merge($worker->toArray(), ['tables' => $this->getTables(), 'inQueue' => $inQueue]);
+        $arResult = array_merge($worker->toArray(), ['tables' => $this->getTables($departmentId), 'inQueue' => $inQueue]);
         if(!empty($tableName)){
             $arResult = array_merge($arResult, ['table' => $tableName]);
         }

@@ -30,7 +30,7 @@ class Queue extends Model{
     protected static function booted()
     {
         static::updated(function ($queue) {
-            event(new OrderRequested($queue->getAttribute('table')->id, $queue->is_closed, $queue->getAttribute('table')->code, $queue->getAttribute('table')->name, $queue->worker->name, $queue->updated_at ));
+            event(new OrderRequested($queue->getAttribute('table')->department_id,$queue->getAttribute('table')->id, $queue->is_closed, $queue->getAttribute('table')->code, $queue->getAttribute('table')->name, $queue->worker->name, $queue->updated_at ));
         });
 
     }
