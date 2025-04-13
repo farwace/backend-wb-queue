@@ -15,7 +15,21 @@
                 </template>
             </div>
         </template>
-        <h2>Рабочее пространство</h2>
+        <h2>
+            Рабочее пространство
+            <template v-if="currentDepartment?.name">
+                @{{ ' ' + currentDepartment?.name }}
+                <button class="btn btn-secondary" type="button" @click="setDepartment(0)">Сбросить</button>
+            </template>
+        </h2>
+        <template v-if="departmentId < 1">
+            <h2>Выберите направление:</h2>
+            <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-secondary" type="button" :key="'dep-' + dep.id" v-for="dep in departments" @click="setDepartment(dep.id)">
+                    @{{ dep.name }}
+                </button>
+            </div>
+        </template>
         <div class="queue">
             <template v-for="item in orderItems" :key="item.table.id + '-' + item.worker.id">
                 <div class="item" :class="{fire:item.isRed}">
@@ -36,12 +50,28 @@
                 setup: () => {
                     const items = ref([]);
                     const checkTables = ref([]);
+                    const departmentId = ref(localStorage.getItem('department') || 0);
+                    const departments = ref([]);
 
                     const now = ref(new Date());
 
                     const loadItems = () => {
+                        if(departments.value.length < 1){
+                            $.ajax({
+                                url: '/api/worker/v1.0/department-list',
+                                type: "GET",
+                                success: function (res){
+                                    departments.value = res;
+                                }
+                            })
+                        }
+
+                        if(departmentId.value < 1) {
+                            return;
+                        }
+
                         $.ajax({
-                            url: '/api/worker/v1.0/unavailable-tables',
+                            url: `/api/worker/v1.0/unavailable-tables/${departmentId.value}`,
                             type: 'GET',
                             success: function (res){
                                 if('in_progress' in res){
@@ -65,7 +95,9 @@
                     loadItems();
 
                     const orderItems = computed(() => {
-                        return [...items.value].sort((a, b) => new Date(a.updated_at) - new Date(b.updated_at)).map((item) => {
+                        return [...items.value].filter((i) => {
+                            return i?.table?.department?.code == currentDepartment.value?.code;
+                        }).sort((a, b) => new Date(a.updated_at) - new Date(b.updated_at)).map((item) => {
 
                             const updatedAt = new Date(item.updated_at);
                             const diffMs = now.value - updatedAt;
@@ -100,11 +132,28 @@
                         })
                     }
 
+                    const setDepartment = (depId) => {
+                        console.log(depId)
+                        localStorage.setItem('department', depId);
+                        departmentId.value = depId;
+                        loadItems();
+                    }
+
+                    const currentDepartment = computed(() => {
+                        return departments.value.filter((d) => {
+                            return d.id == departmentId.value
+                        })?.[0] || undefined
+                    })
+
                     return {
                         items,
                         orderItems,
                         checkTables,
-                        sendChecked
+                        sendChecked,
+                        departmentId,
+                        setDepartment,
+                        departments,
+                        currentDepartment
                     }
                 }
             });

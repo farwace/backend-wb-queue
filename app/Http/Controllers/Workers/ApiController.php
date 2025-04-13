@@ -244,7 +244,7 @@ class ApiController extends Controller
 
         // Вытащим записи с этими ID
         $lastClosedQueues = Queue::whereIn('id', $subQuery)
-            ->with(['worker', 'table']) // подгружаем связи
+            ->with(['worker', 'table', 'table.department']) // подгружаем связи
             ->get();
 
         // Фильтруем:
@@ -280,6 +280,11 @@ class ApiController extends Controller
             return $this->success([]);
         }
         return $this->failure('Error!');
+    }
+
+    public function getDepartmentList()
+    {
+        return response()->json(Department::query()->orderBy('code', 'asc')->get());
     }
 
 

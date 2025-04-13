@@ -14,4 +14,5 @@ Route::prefix('v1.0')->group(function (){
     Route::get('/queue/{direction}', [ApiController::class, 'getQueue']);
     Route::get('/unavailable-tables/{direction}', [ApiController::class, 'getUnavailableTables']);
     Route::post('/check-table', [ApiController::class, 'setTableChecked']);
+    Route::get('/department-list', [ApiController::class, 'getDepartmentList']);
 });
