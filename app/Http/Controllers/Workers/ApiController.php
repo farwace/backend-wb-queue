@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class ApiController extends Controller
 {
@@ -77,6 +78,17 @@ class ApiController extends Controller
         $table = Table::query()->where('worker_id', $worker->id)->first();
         if(!empty($table)){
             $queue = Queue::query()->where('table_id', $table->id)->where('worker_id', $worker->id)->where('is_closed', false)->first();
+            $arItems = Cache::get('checkTables', []);
+            $arItems[$table->id] = [
+                'id' => $table->id,
+                'name' => $table->name,
+                'code' => $table->code,
+                'workerName' => $worker->name,
+                'workerCode' => $worker->code,
+            ];
+
+            Cache::put('checkTables', $arItems, 1800);
+
             if($queue){
                 $queue->is_closed = true;
                 $queue->save();
@@ -213,7 +225,21 @@ class ApiController extends Controller
             return $table && $table->worker_id === $queue->worker_id;
         })->values();
 
-        return response()->json($filtered);
+        return response()->json(['in_progress' => $filtered, 'closed' => array_values(Cache::get('checkTables', []))]);
+    }
+
+    public function setTableChecked(Request $request): JsonResponse
+    {
+        $arRequest = $request->toArray();
+        if(!empty($arRequest['table_id'])){
+            $arTables = Cache::get('checkTables', []);
+            if(!empty($arTables[$arRequest['table_id']])){
+                unset($arTables[$arRequest['table_id']]);
+                Cache::put('checkTables', $arTables);
+            }
+            return $this->success([]);
+        }
+        return $this->failure('Error!');
     }
 
 

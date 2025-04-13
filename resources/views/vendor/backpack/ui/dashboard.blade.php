@@ -3,13 +3,25 @@
 
 @section('content')
     <div id="appRoot">
+        <template v-if="checkTables && checkTables.length > 0">
+            <h2>Проверить стол (сотрудник нажал выход)</h2>
+            <div class="queue small mb-6">
+                <template v-for="item in checkTables" :key="item.id + '-' + item.code">
+                    <div class="item blue">
+                        <small class="small"> @{{ item.name }}  @{{ item.workerName.slice(0,15) }} </small>
+                        <div><small> @{{ item.workerCode }} </small></div>
+                    </div>
+                </template>
+            </div>
+        </template>
         <h2>Рабочее пространство</h2>
         <div class="queue">
             <template v-for="item in orderItems" :key="item.table.id + '-' + item.worker.id">
                 <div class="item" :class="{fire:item.isRed}">
                     <small class="small"> @{{ item.table.name }}  @{{ item.worker.name.slice(0,15) }} </small>
                     <div><small> @{{ item.worker.code }} </small></div>
-                    <div><small> Время с момента получения: @{{ item.timer }} </small></div>
+                    <div class="microtext">Время с момента получения:</div>
+                    <div><small>@{{ item.timer }} </small></div>
                 </div>
             </template>
         </div>
@@ -22,6 +34,8 @@
             const app = createApp({
                 setup: () => {
                     const items = ref([]);
+                    const checkTables = ref([]);
+
                     const now = ref(new Date());
 
                     const loadItems = () => {
@@ -29,8 +43,11 @@
                             url: '/api/worker/v1.0/unavailable-tables',
                             type: 'GET',
                             success: function (res){
-                                if(Array.isArray(res)){
-                                    items.value = res;
+                                if('in_progress' in res){
+                                    items.value = res['in_progress'];
+                                }
+                                if('closed' in res){
+                                    checkTables.value = res['closed'];
                                 }
                             }
                         })
@@ -70,6 +87,7 @@
                     return {
                         items,
                         orderItems,
+                        checkTables
                     }
                 }
             });
@@ -81,19 +99,32 @@
     <style>
         .queue{
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
             gap: 2rem;
         }
-
+        .queue.small{
+            grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+        }
+        .queue.small .item{
+            font-size: 2rem;
+            padding: 1rem;
+        }
         .queue .item{
             border-radius: 1rem;
             border: 1px solid #0056b3;
-            padding: 2rem;
             text-align: center;
-            font-size: 3rem;
+            font-size: 2rem;
+            padding: 1rem;
         }
         .queue .item.fire{
             background-color: rgba(255, 0, 0, 0.2);
+        }
+        .queue .item.blue{
+            background-color: rgba(17, 0, 255, 0.2);
+        }
+        .microtext{
+            font-size: 14px;
+            margin-bottom: -14px;
         }
     </style>
 @endsection
