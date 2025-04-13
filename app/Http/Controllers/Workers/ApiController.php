@@ -39,15 +39,18 @@ class ApiController extends Controller
 
         /** @var ?Worker $worker */
         $worker = Worker::query()->where('code', $badgeCode)->first();
-        $worker->department_id = $department->id;
+        if($worker){
+            $worker->department_id = $department->id;
+            $worker->save();
+        }
 
         if(!$worker){
             $worker = new Worker();
             $worker->code = $badgeCode;
             $worker->name = '';
             $worker->department_id = $department->id;
+            $worker->save();
         }
-        $worker->save();
 
         return $this->success($this->workerInfo($worker), 'Success');
 
