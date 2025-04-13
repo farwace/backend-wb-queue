@@ -160,6 +160,8 @@
                                 });
                             }
                             return i;
+                        }).filter((i) => {
+                            return !i['departmentId'] || i['departmentId'] == departmentId.value
                         })
                     })
 

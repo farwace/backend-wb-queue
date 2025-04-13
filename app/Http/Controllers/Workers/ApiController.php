@@ -103,7 +103,8 @@ class ApiController extends Controller
                 'code' => $table->code,
                 'workerName' => $worker->name,
                 'workerCode' => $worker->code,
-                'timestamp' => Carbon::now()
+                'timestamp' => Carbon::now(),
+                'departmentId' => $table->department_id,
             ];
 
             Cache::put('checkTables', $arItems, 1800);
