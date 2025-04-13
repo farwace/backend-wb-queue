@@ -58,6 +58,13 @@ class TablesCrudController extends CrudController
             'label' => 'Код',
         ]);
         $this->crud->addColumn([
+            'name' => 'worker_id',
+            'type' => 'number',
+            'label' => 'w_id',
+            'orderable' => true,
+        ]);
+
+        $this->crud->addColumn([
             'name' => 'worker.name',
             'type' => 'text',
             'label' => 'Занят',
