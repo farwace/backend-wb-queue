@@ -115,7 +115,7 @@ class ApiController extends Controller
         }
 
         if(empty($arRequest['table_id'])){
-            return $this->failure('Ошибка получения номера столика!', 422);
+            return $this->failure('Ошибка получения номера стола!', 422);
         }
 
         $table = Table::query()->where('id', $arRequest['table_id'])->first();
@@ -125,7 +125,7 @@ class ApiController extends Controller
             return $this->success($this->workerInfo($worker), 'Success');
         }
 
-        return $this->failure('Не удалось забронировать столик! Обновите страницу и попробуйте еще раз', 422);
+        return $this->failure('Не удалось забронировать стол! Обновите страницу и попробуйте еще раз', 422);
     }
 
 

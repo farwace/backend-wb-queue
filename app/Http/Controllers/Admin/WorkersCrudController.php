@@ -68,7 +68,7 @@ class WorkersCrudController extends CrudController
         ]);
         $this->crud->addColumn([
             'name' => 'table.code',
-            'label' => 'Столик',
+            'label' => 'Стол',
             'type' => 'text',
             'searchLogic' => function ($query, $column, $searchTerm) {
                 $query->orWhereHas('table', function ($query) use ($column, $searchTerm) {

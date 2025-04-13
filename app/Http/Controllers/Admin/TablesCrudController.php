@@ -35,7 +35,7 @@ class TablesCrudController extends CrudController
     {
         CRUD::setModel(Table::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/tables');
-        CRUD::setEntityNameStrings('столик', 'Столики');
+        CRUD::setEntityNameStrings('стол', 'Столы');
     }
 
     /**
