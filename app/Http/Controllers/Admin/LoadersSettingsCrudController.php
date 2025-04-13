@@ -61,6 +61,11 @@ class LoadersSettingsCrudController extends CrudController
             'name' => 'department.name',
             'type' => 'text',
             'label' => 'Направление',
+            'searchLogic' => function ($query, $column, $searchTerm) {
+                $query->orWhereHas('department', function ($query) use ($column, $searchTerm) {
+                    $query->where('name', 'like', '%' . $searchTerm . '%')->orWhere('code', 'like', '%' . $searchTerm . '%');
+                });
+            }
         ]);
 
     }
