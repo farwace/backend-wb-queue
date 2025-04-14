@@ -180,7 +180,7 @@ class ApiController extends Controller
             ->get()
             ->toArray();
 
-        $lastKey = (int)Cache::get('loaderIndex', 0);
+        $lastKey = (int)Cache::get('loaderIndex-' . $worker->table->department_id, 0);
         if(!$loaderSettings){
             $loaderSettings = [
                 [
@@ -193,7 +193,7 @@ class ApiController extends Controller
         if($lastKey >= (count($loaderSettings))){
             $lastKey = 0;
         }
-        Cache::put('loaderIndex', $lastKey);
+        Cache::put('loaderIndex-' . $worker->table->department_id, $lastKey);
         $queue = new Queue();
         if(!empty($loaderSettings[$lastKey])){
             $queue->color = $loaderSettings[$lastKey]['color'];
