@@ -174,11 +174,17 @@ class ApiController extends Controller
             ->where('active', true)
             ->where('department_id', $worker->table->department_id)
             ->orderBy('id', 'asc')
-            ->pluck('color')
+            ->get()
             ->toArray();
+
         $lastKey = (int)Cache::get('loaderIndex', 0);
         if(!$loaderSettings){
-            $loaderSettings = ['#000000'];
+            $loaderSettings = [
+                [
+                    'color' => '#000000',
+                    'name' => ''
+                ]
+            ];
         }
         $lastKey +=1;
         if($lastKey >= (count($loaderSettings))){
@@ -187,7 +193,8 @@ class ApiController extends Controller
         Cache::put('loaderIndex', $lastKey);
         $queue = new Queue();
         if(!empty($loaderSettings[$lastKey])){
-            $queue->color = $loaderSettings[$lastKey];
+            $queue->color = $loaderSettings[$lastKey]['color'];
+            $queue->name = $loaderSettings[$lastKey]['name'];
         }
         $queue->table_id = $tableId;
         $queue->worker_id = $worker->id;
@@ -196,7 +203,7 @@ class ApiController extends Controller
 
         $arWorkerInfo['inQueue'] = true;
 
-        event(new OrderRequested($worker->table->department->code, $worker->table->id, false, $worker->table->code, $worker->table->name, $worker->name, $queue->updated_at, $queue->color));
+        event(new OrderRequested($worker->table->department->code, $worker->table->id, false, $worker->table->code, $worker->table->name, $worker->name, $queue->updated_at, $queue->color, $queue->name));
         //OrderRequested::dispatch($queue->id, false, $worker->table->code, $worker->table->name, $worker->name);
 
         return $this->success($arWorkerInfo, 'Success');
