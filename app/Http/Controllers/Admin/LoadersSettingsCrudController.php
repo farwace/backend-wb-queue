@@ -53,6 +53,12 @@ class LoadersSettingsCrudController extends CrudController
             'label' => 'Цвет',
         ]);
         $this->crud->addColumn([
+            'name' => 'name',
+            'type' => 'text',
+            'label' => 'Имя',
+        ]);
+
+        $this->crud->addColumn([
             'name' => 'active',
             'type' => 'boolean',
             'label' => 'Активность',
@@ -82,6 +88,12 @@ class LoadersSettingsCrudController extends CrudController
             'label' => 'Цвет',
             'default' => '#000000'
         ]);
+        $this->crud->addField([
+            'name' => 'name',
+            'type' => 'text',
+            'label' => 'Имя',
+        ]);
+
         $this->crud->addField([
             'name' => 'active',
             'type' => 'boolean',

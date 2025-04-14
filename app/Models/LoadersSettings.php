@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property \DateTime $updated_at
  * @property string $color
  * @property boolean $active
+ * @property ?string $name
  */
 class LoadersSettings extends Model{
     use CrudTrait;
