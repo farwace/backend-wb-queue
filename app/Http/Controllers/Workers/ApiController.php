@@ -164,6 +164,9 @@ class ApiController extends Controller
             return $this->failure('Сотрудник не найден!', 422);
         }
 
+        if(empty($worker->table->id)){
+            return $this->failure('Ошибка авторизации! Обновите страницу', 422);
+        }
         $tableId = $worker->table->id;
 
         $arWorkerInfo = $this->workerInfo($worker);

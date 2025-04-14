@@ -40,6 +40,7 @@
                     <div><small> @{{ item.worker.code }} </small></div>
                     <div class="microtext">Время с момента получения:</div>
                     <div><small>@{{ item.timer }} </small></div>
+                    <button class="btn btn-danger" type="button" @click="tryClearTable(item.id, item.table.name, item.worker.name, item.worker.code)">Освободить стол</button>
                 </div>
             </template>
         </div>
@@ -165,6 +166,45 @@
                         })
                     })
 
+                    const tryClearTable = (id, tableName, workerName, workerCode) => {
+                        swal({
+                            title: `Подтвердите освобождение ${tableName}`,
+                            text: `[${workerCode}] ${workerName} - разлогинить сотрудника?`,
+                            icon: 'warning',
+                            buttons: {
+                                cancel: {
+                                    text: 'Отменить',
+                                    value: null,
+                                    className: 'bg-secondary',
+                                    closeModal: true,
+                                    visible: true,
+                                },
+                                delete: {
+                                    text: 'Освободить',
+                                    className: 'bg-danger',
+                                    value: true,
+                                    visible: true,
+                                },
+                            },
+                            dangerMode: true,
+                        }).then(function (e){
+                            if(e){
+                                $.ajax({
+                                    url: '/api/worker/v1.0/leave-table',
+                                    type: 'POST',
+                                    beforeSend: function(request) {
+                                        request.setRequestHeader("badge-code", workerCode);
+                                    },
+                                    success: function (){
+                                        items.value = [...items.value].filter((i) => {
+                                            return i.id != id
+                                        })
+                                    }
+                                })
+                            }
+                        })
+                    }
+
                     return {
                         items,
                         orderItems,
@@ -173,7 +213,8 @@
                         departmentId,
                         setDepartment,
                         departments,
-                        currentDepartment
+                        currentDepartment,
+                        tryClearTable
                     }
                 }
             });
