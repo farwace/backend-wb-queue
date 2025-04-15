@@ -5,11 +5,21 @@ namespace App\Models;
 use Backpack\CRUD\app\Exceptions\AccessDeniedException;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 
+/**
+ * Админ
+ * @property int $id
+ * @property \DateTime $created_at
+ * @property \DateTime $updated_at
+ * @property ?string $name
+ * @property string $email
+ * @property Department $department
+ */
 class Admin extends Authenticatable
 {
     use CrudTrait, HasFactory, Notifiable;
@@ -30,7 +40,7 @@ class Admin extends Authenticatable
     // public $timestamps = false;
     protected $guarded = ['id'];
     protected $fillable = [
-        'name', 'email', 'password', 'is_root',
+        'name', 'email', 'password', 'is_root', 'department_id',
     ];
     // protected $hidden = [];
     // protected $dates = [];
@@ -44,6 +54,10 @@ class Admin extends Authenticatable
                 AdminPermission::initPermission($admin->id, $permission['id'], $permission['name']);
             }
         });
+    }
+
+    public function department():BelongsTo{
+        return $this->belongsTo(Department::class, 'department_id', 'id');
     }
     /*
     |--------------------------------------------------------------------------

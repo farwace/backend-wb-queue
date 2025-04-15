@@ -26,4 +26,9 @@ class Department extends Model{
     {
         return $this->hasMany(Table::class, 'department_id', 'id');
     }
+
+    public function admins():HasMany
+    {
+        return $this->hasMany(Admin::class, 'department_id', 'id');
+    }
 }
