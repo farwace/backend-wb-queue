@@ -110,6 +110,7 @@ class ApiController extends Controller
             Cache::put('checkTables', $arItems, 1800);
 
             if($queue){
+                event(new OrderRequested($worker->table->department->code, $worker->table->id, true, $worker->table->code, $worker->table->name, $worker->name, $queue->updated_at, $queue->color, $queue->name));
                 $queue->is_closed = true;
                 $queue->save();
             }
