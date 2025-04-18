@@ -132,16 +132,17 @@ class AdminsCrudController extends CrudController
     {
         if(!empty($this->data['entry']->id)){
 
-            if(!empty(request()->post()['departments_custom'])){
+            if(isset(request()->post()['departments_custom'])){
                 $arDepartmentsIds = request()->post()['departments_custom'];
                 AdminDepartment::where('admin_id', $this->data['entry']->id)->delete();
-                foreach ($arDepartmentsIds as $departmentId) {
-                    AdminDepartment::query()->insert([
-                        'admin_id' => $this->data['entry']->id,
-                        'department_id' => (int)$departmentId
-                    ]);
+                if(!empty($arDepartmentsIds)){
+                    foreach ($arDepartmentsIds as $departmentId) {
+                        AdminDepartment::query()->insert([
+                            'admin_id' => $this->data['entry']->id,
+                            'department_id' => (int)$departmentId
+                        ]);
+                    }
                 }
-
             }
         }
     }
