@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Department;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // --------------------------
@@ -22,6 +24,25 @@ Route::group([
     Route::crud('queue', 'QueueCrudController');
     Route::crud('loaders-settings', 'LoadersSettingsCrudController');
     Route::crud('admins', 'AdminsCrudController');
+
+    Route::get('/departments-list', function (Request $request){
+        $backpackUser = backpack_user();
+        if(!empty($backpackUser->id)){
+            if($backpackUser->is_root){
+                return response()->json(Department::query()->orderBy('code', 'asc')->get());
+            }
+            $arIds = [];
+            foreach ($backpackUser->departments as $dep){
+                $arIds[] = $dep->id;
+            }
+            if(count($arIds) > 0){
+                return response()->json(Department::query()->whereIn('id', $arIds)->orderBy('code', 'asc')->get());
+            }
+        }
+        return response()->json([]);
+
+    })->name('admin.departmentsList');
+
 }); // this should be the absolute last line of this file
 
 /**

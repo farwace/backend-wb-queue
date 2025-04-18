@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\Admin;
+use App\Models\AdminDepartment;
 use App\Models\Department;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
@@ -20,10 +21,15 @@ use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 class AdminsCrudController extends CrudController
 {
     use ListOperation;
-    use CreateOperation;
-    use UpdateOperation;
     use DeleteOperation;
     use ShowOperation;
+
+    use CreateOperation{
+        CreateOperation::store as parentStore;
+    }
+    use UpdateOperation{
+        update as parentUpdate;
+    }
 
     /**
      * Configure the CrudPanel object. Apply settings to all operations.
@@ -60,8 +66,9 @@ class AdminsCrudController extends CrudController
         ]);
 
         $this->crud->addColumn([
-            'name' => 'department.name',
-            'type' => 'text',
+            'name' => 'departments',
+            'type' => 'model_function',
+            'function_name' => 'getDepartmentsStrVal',
             'label' => 'Направление'
         ]);
     }
@@ -79,13 +86,20 @@ class AdminsCrudController extends CrudController
             'type' => 'password',
             'label' => 'Пароль'
         ]);
-        $this->crud->addField([
-            'name' => 'department_id',
-            'label' => 'Направление',
-            'type' => 'select',
-            'entity' => 'department',
-            'attribute' => 'name',
-            'model' => Department::class,
+
+        $selectedDepartments = [];
+        $entity = $this->crud->getCurrentEntry();
+        if(!empty($entity)){
+            $selectedDepartments = AdminDepartment::query()->where('admin_id', $entity->id)->pluck('department_id')->toArray();
+        }
+        CRUD::addField([
+            'name'  => 'departments_custom',
+            'label' => 'Направления',
+            'type'  => 'select_from_array',
+            'options' => Department::pluck('name', 'id')->toArray(),
+            'allows_null' => false,
+            'allows_multiple' => true,
+            'default' => $selectedDepartments,
         ]);
     }
 
@@ -98,5 +112,37 @@ class AdminsCrudController extends CrudController
     protected function setupUpdateOperation()
     {
         $this->setupCreateOperation();
+    }
+
+
+    public function store()
+    {
+        $parentStoreResult = $this->parentStore();
+        $this->setDirections();
+        return $parentStoreResult;
+    }
+
+    public function update(){
+        $parentUpdateResult = $this->parentUpdate();
+        $this->setDirections();
+        return $parentUpdateResult;
+    }
+
+    public function setDirections()
+    {
+        if(!empty($this->data['entry']->id)){
+
+            if(!empty(request()->post()['departments_custom'])){
+                $arDepartmentsIds = request()->post()['departments_custom'];
+                AdminDepartment::where('admin_id', $this->data['entry']->id)->delete();
+                foreach ($arDepartmentsIds as $departmentId) {
+                    AdminDepartment::query()->insert([
+                        'admin_id' => $this->data['entry']->id,
+                        'department_id' => (int)$departmentId
+                    ]);
+                }
+
+            }
+        }
     }
 }

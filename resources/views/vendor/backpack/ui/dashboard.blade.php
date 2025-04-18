@@ -62,7 +62,7 @@
                     const loadItems = () => {
                         if(departments.value.length < 1){
                             $.ajax({
-                                url: '/api/worker/v1.0/department-list',
+                                url: '/admin/departments-list',
                                 type: "GET",
                                 success: function (res){
                                     departments.value = res;

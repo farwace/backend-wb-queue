@@ -59,6 +59,20 @@ class Admin extends Authenticatable
     public function department():BelongsTo{
         return $this->belongsTo(Department::class, 'department_id', 'id');
     }
+
+    public function departments(): BelongsToMany {
+        return $this->belongsToMany(Department::class, 'admin_department', 'admin_id', 'department_id');
+    }
+
+    public function getDepartmentsStrVal()
+    {
+        $arNames = [];
+        foreach ($this->departments as $dep){
+            $arNames[] = $dep->name;
+        }
+
+        return join(', ', $arNames);
+    }
     /*
     |--------------------------------------------------------------------------
     | FUNCTIONS
