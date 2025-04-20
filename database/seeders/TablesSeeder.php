@@ -15,54 +15,18 @@ class TablesSeeder extends Seeder{
         // 5 - e10 185
         // 6 - e7 180
         // 7 - e8 64
+        // 8 - e4 66
 
 
-        for ($i = 1; $i <= 96; $i++){
+        for ($i = 1; $i <= 66; $i++){
             DB::table('tables')->insertOrIgnore([
                 'name' => ''. $i . ' стол',
                 'code' => ''.$i . ' стол',
-                'department_id' => 4,
+                'department_id' => 8,
                 'worker_id' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
         }
-
-        for ($i = 1; $i <= 185; $i++){
-            DB::table('tables')->insertOrIgnore([
-                'name' => ''. $i . ' стол',
-                'code' => ''.$i . ' стол',
-                'department_id' => 5,
-                'worker_id' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
-        for ($i = 1; $i <= 64; $i++){
-            DB::table('tables')->insertOrIgnore([
-                'name' => ''. $i . ' стол',
-                'code' => ''.$i . ' стол',
-                'department_id' => 7,
-                'worker_id' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
-        for ($i = 1; $i <= 180; $i++){
-            DB::table('tables')->insertOrIgnore([
-                'name' => ''. $i . ' стол',
-                'code' => ''.$i . ' стол',
-                'department_id' => 6,
-                'worker_id' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
-
-
-
     }
 }
