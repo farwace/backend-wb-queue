@@ -18,11 +18,11 @@ class TablesSeeder extends Seeder{
         // 8 - e4 66
 
 
-        for ($i = 1; $i <= 66; $i++){
+        for ($i = 181; $i <= 252; $i++){
             DB::table('tables')->insertOrIgnore([
                 'name' => ''. $i . ' стол',
                 'code' => ''.$i . ' стол',
-                'department_id' => 8,
+                'department_id' => 6,
                 'worker_id' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
