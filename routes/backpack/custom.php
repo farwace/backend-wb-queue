@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Exports\LogsExport;
 use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -24,7 +25,10 @@ Route::group([
     Route::crud('queue', 'QueueCrudController');
     Route::crud('loaders-settings', 'LoadersSettingsCrudController');
     Route::crud('admins', 'AdminsCrudController');
-
+    Route::get('/export-logs/{departmentId}', function ($departmentId, Request $request) {
+        $logsExport = new LogsExport();
+        return $logsExport->execute('department-' . $departmentId, ['departmentId' => $departmentId]);
+    })->name('admin.export-logs');
     Route::get('/departments-list', function (Request $request){
         $backpackUser = backpack_user();
         if(!empty($backpackUser->id)){

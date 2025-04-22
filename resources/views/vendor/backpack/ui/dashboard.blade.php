@@ -7,6 +7,7 @@
             <h2>
                 @{{ currentDepartment?.name }}
                 <button class="btn btn-secondary" type="button" @click="setDepartment(0)">Назад</button>
+                &nbsp;<a class="btn btn-warnings" :href="'/admin/export-logs/' + currentDepartment.id" target="_blank">Логи за последние сутки</a>
             </h2>
         </template>
         <template v-if="cCheckTables && cCheckTables.length > 0">
