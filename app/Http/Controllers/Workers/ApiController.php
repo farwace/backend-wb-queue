@@ -9,6 +9,7 @@ use App\Http\Traits\RespondsWithHttpStatus;
 use App\Models\Department;
 use App\Models\LoadersSettings;
 use App\Models\Queue;
+use App\Models\QueueLog;
 use App\Models\Table;
 use App\Models\Worker;
 use Carbon\Carbon;
@@ -209,6 +210,14 @@ class ApiController extends Controller
 
         event(new OrderRequested($worker->table->department->code, $worker->table->id, false, $worker->table->code, $worker->table->name, $worker->name, $queue->updated_at, $queue->color, $queue->name));
         //OrderRequested::dispatch($queue->id, false, $worker->table->code, $worker->table->name, $worker->name);
+        $queueLog = new QueueLog();
+        $queueLog->worker_badge = $worker->code;
+        $queueLog->worker_name = $worker->name;
+        $queueLog->table = $worker->table->name;
+        $queueLog->department_id = $worker->table->department_id;
+        $queueLog->status = 'success';
+        $queueLog->message = 'Заказал товар!';
+        $queueLog->save();
 
         return $this->success($arWorkerInfo, 'Success');
     }
@@ -232,13 +241,30 @@ class ApiController extends Controller
 
         $queue = Queue::query()->where('table_id', $tableId)->where('worker_id', $worker->id)->where('is_closed', false)->orderBy('id', 'desc')->first();
         if($queue){
-            if(abs(Carbon::now()->diffInSeconds($queue->created_at)) < 20){
+            if(abs(Carbon::now()->diffInSeconds($queue->created_at)) < 55){
+                $queueLog = new QueueLog();
+                $queueLog->worker_badge = $worker->code;
+                $queueLog->worker_name = $worker->name;
+                $queueLog->table = $worker->table->name;
+                $queueLog->department_id = $worker->table->department_id;
+                $queueLog->status = 'error';
+                $queueLog->message = 'Нажал получить товар слишком быстро (' . abs(Carbon::now()->diffInSeconds($queue->created_at)) . ' сек)!';
+                $queueLog->save();
+
                 return $this->failure('Замечена подозрительная активность! При повторе информация будет отправлена старшему!', 422);
             }
             event(new OrderRequested($worker->table->department->code, $worker->table->id, true, $worker->table->code, $worker->table->name, $worker->name, $queue->updated_at));
             //OrderRequested::dispatch($queue->id, true, $worker->table->code, $worker->table->name, $worker->name);
         }
         Queue::query()->where('table_id', $tableId)->where('worker_id', $worker->id)->update(['is_closed' => true]);
+        $queueLog = new QueueLog();
+        $queueLog->worker_badge = $worker->code;
+        $queueLog->worker_name = $worker->name;
+        $queueLog->table = $worker->table->name;
+        $queueLog->department_id = $worker->table->department_id;
+        $queueLog->status = 'success';
+        $queueLog->message = 'Получил товар!';
+        $queueLog->save();
 
         return $this->success($this->workerInfo($worker), 'Success');
     }

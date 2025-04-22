@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Queue;
+use App\Models\QueueLog;
 use Illuminate\Console\Command;
 
 class ClearQueue extends Command
@@ -27,5 +28,7 @@ class ClearQueue extends Command
     public function handle()
     {
         Queue::query()->where('created_at', '<=', now()->subDays(7))->delete();
+        QueueLog::query()->where('created_at', '<=', now()->subDays(7))->delete();
+
     }
 }
