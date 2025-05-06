@@ -256,14 +256,38 @@ class ApiController extends Controller
             event(new OrderRequested($worker->table->department->code, $worker->table->id, true, $worker->table->code, $worker->table->name, $worker->name, $queue->updated_at));
             //OrderRequested::dispatch($queue->id, true, $worker->table->code, $worker->table->name, $worker->name);
         }
-        Queue::query()->where('table_id', $tableId)->where('worker_id', $worker->id)->update(['is_closed' => true]);
+        $queue = Queue::query()->where('table_id', $tableId)->where('worker_id', $worker->id)->where('is_closed', false)->first();
+        $firstQueue = Queue::query()
+            ->where('color', $queue->color)
+            ->where('name', $queue->name)
+            ->where('is_closed', false)
+            ->orderBy('id', 'asc')
+            ->first();
+
+        if(!empty($queue)){
+            $queue->is_closed = true;
+            $queue->save();
+        }
+
+        $status = 'success';
+        $message = 'Получил товар!';
+        if(!empty($firstQueue) && !empty($queue)){
+            if($firstQueue->id != $queue->id){
+                $status = 'warning';
+                $message = 'Получил товар, НО раньше очереди';
+                if(!empty($queue->name)){
+                    $message .= ' (грузчик ' . $queue->name . ')';
+                }
+            }
+        }
+
         $queueLog = new QueueLog();
         $queueLog->worker_badge = $worker->code;
         $queueLog->worker_name = $worker->name;
         $queueLog->table = $worker->table->name;
         $queueLog->department_id = $worker->table->department_id;
-        $queueLog->status = 'success';
-        $queueLog->message = 'Получил товар!';
+        $queueLog->status = $status;
+        $queueLog->message = $message;
         $queueLog->save();
 
         return $this->success($this->workerInfo($worker), 'Success');
