@@ -52,17 +52,34 @@ class QueueCrudController extends CrudController
             'name' => 'table.name',
             'label' => 'Стол',
             'type' => 'text',
+            'searchLogic' => function ($query, $column, $searchTerm) {
+                $query->orWhereHas('table', function ($query) use ($column, $searchTerm) {
+                    $query->where('name', 'like', '%' . $searchTerm . '%')->orWhere('code', 'like', '%' . $searchTerm . '%');
+                });
+            }
         ]);
         $this->crud->addColumn([
             'name' => 'table.department.name',
             'label' => 'Направление',
             'type' => 'text',
+            'searchLogic' => function ($query, $column, $searchTerm) {
+                $query->orWhereHas('table', function ($query) use ($column, $searchTerm) {
+                    $query->whereHas('department', function ($query) use ($column, $searchTerm) {
+                        $query->where('name', 'like', '%' . $searchTerm . '%')->orWhere('code', 'like', '%' . $searchTerm . '%');
+                    });
+                });
+            }
         ]);
 
         $this->crud->addColumn([
             'name' => 'worker.name',
             'label' => 'Сотрудник',
             'type' => 'text',
+            'searchLogic' => function ($query, $column, $searchTerm) {
+                $query->orWhereHas('worker', function ($query) use ($column, $searchTerm) {
+                    $query->where('name', 'like', '%' . $searchTerm . '%')->orWhere('code', 'like', '%' . $searchTerm . '%');
+                });
+            }
         ]);
         $this->crud->addColumn([
             'name' => 'worker.code',
