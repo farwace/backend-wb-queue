@@ -68,7 +68,7 @@ class ApiController extends Controller
         /** @var ?Worker $worker */
         $worker = Worker::query()->where('code', $badgeCode)->first();
         if(!$worker){
-            return $this->failure('Сотрудник не найден!', 422);
+            return $this->failure('Сотрудник не найден!', 403,403);
         }
 
         if(empty($arRequest['name'])){
@@ -92,7 +92,7 @@ class ApiController extends Controller
         $worker->department_id = null;
         $worker->save();
         if(!$worker){
-            return $this->failure('Сотрудник не найден!', 422);
+            return $this->failure('Сотрудник не найден!', 403,403);
         }
         $table = Table::query()->where('worker_id', $worker->id)->first();
         if(!empty($table)){
@@ -132,7 +132,7 @@ class ApiController extends Controller
         /** @var ?Worker $worker */
         $worker = Worker::query()->where('code', $badgeCode)->first();
         if(!$worker){
-            return $this->failure('Сотрудник не найден!', 422);
+            return $this->failure('Сотрудник не найден!', 403,403);
         }
 
         if(empty($arRequest['table_id'])){
@@ -163,7 +163,7 @@ class ApiController extends Controller
         /** @var ?Worker $worker */
         $worker = Worker::query()->where('code', $badgeCode)->first();
         if(!$worker){
-            return $this->failure('Сотрудник не найден!', 422);
+            return $this->failure('Сотрудник не найден!', 403, 403);
         }
 
         if(empty($worker->table->id)){
@@ -231,7 +231,7 @@ class ApiController extends Controller
         /** @var ?Worker $worker */
         $worker = Worker::query()->where('code', $badgeCode)->first();
         if(!$worker){
-            return $this->failure('Сотрудник не найден!', 422);
+            return $this->failure('Сотрудник не найден!', 403,403);
         }
 
         if(empty($worker->table->id)){
