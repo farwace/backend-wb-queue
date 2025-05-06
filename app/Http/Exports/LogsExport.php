@@ -30,7 +30,7 @@ class LogsExport implements ISimpleCsvExporter
 
     public function getCount(array $arParams = []): int
     {
-        $query = QueueLog::query()->where('created_at', '>', Carbon::now()->subDays(2));
+        $query = QueueLog::query()->where('created_at', '>', Carbon::now()->subDays(4));
         if(!empty($arParams['departmentId'])){
             $query->where('department_id', $arParams['departmentId']);
         }
@@ -39,7 +39,7 @@ class LogsExport implements ISimpleCsvExporter
 
     public function query(int $chunkSize, int $offset, array $arParams = [])
     {
-        $query = QueueLog::query()->where('created_at', '>', Carbon::now()->subDays(2));
+        $query = QueueLog::query()->where('created_at', '>', Carbon::now()->subDays(4));
 
         if(!empty($arParams['departmentId'])){
             $query->where('department_id', $arParams['departmentId']);
