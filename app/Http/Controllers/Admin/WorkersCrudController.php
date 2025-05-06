@@ -106,5 +106,17 @@ class WorkersCrudController extends CrudController
     protected function setupUpdateOperation()
     {
         $this->setupCreateOperation();
+        /** @var Worker $entry */
+        $entry = $this->crud->getCurrentEntry();
+
+        $this->crud->addField([
+            'name' => 'enterQueueBtn',
+            'type' => 'view',
+            'view' => 'admin/fields/enter-queue',
+            'label' => 'Заказ товара',
+            'badgeCode' => $entry->code,
+            'url' => '/api/worker/v1.0/enter-queue',
+            'directionCode' => $entry->department->code,
+        ]);
     }
 }
