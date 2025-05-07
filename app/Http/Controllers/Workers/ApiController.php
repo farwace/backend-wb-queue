@@ -256,7 +256,9 @@ class ApiController extends Controller
             event(new OrderRequested($worker->table->department->code, $worker->table->id, true, $worker->table->code, $worker->table->name, $worker->name, $queue->updated_at));
             //OrderRequested::dispatch($queue->id, true, $worker->table->code, $worker->table->name, $worker->name);
         }
+        /** @var Queue $queue */
         $queue = Queue::query()->where('table_id', $tableId)->where('worker_id', $worker->id)->where('is_closed', false)->first();
+        /** @var Queue $firstQueue */
         $firstQueue = Queue::query()
             ->where('color', $queue->color)
             ->where('name', $queue->name)
@@ -276,7 +278,11 @@ class ApiController extends Controller
                 $status = 'warning';
                 $message = 'Получил товар, НО раньше очереди';
                 if(!empty($queue->name)){
-                    $message .= ' (грузчик ' . $queue->name . ')';
+                    $message .= ' (грузчик ' . $queue->name;
+                    if(!empty($firstQueue->worker)){
+                        $message .= ' -> [' . $firstQueue->worker->code . '] ' . $firstQueue->worker->name;
+                    }
+                    $message .= ')';
                 }
             }
         }
