@@ -28,7 +28,7 @@ class ClearQueue extends Command
     public function handle()
     {
         Queue::query()->where('created_at', '<=', now()->subDays(7))->delete();
-        QueueLog::query()->where('created_at', '<=', now()->subDays(360))->delete();
+        QueueLog::query()->where('created_at', '<=', now()->subDays(60))->delete();
 
     }
 }
