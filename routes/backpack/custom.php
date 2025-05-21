@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Exports\LogsExport;
+use App\Http\Exports\LogsExportMonth;
 use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -29,6 +30,11 @@ Route::group([
         $logsExport = new LogsExport();
         return $logsExport->execute('department-' . $departmentId, ['departmentId' => $departmentId]);
     })->name('admin.export-logs');
+    Route::get('/export-logs-month/{departmentId}', function ($departmentId, Request $request) {
+        $logsExport = new LogsExportMonth();
+        return $logsExport->execute('department-' . $departmentId . '-month', ['departmentId' => $departmentId]);
+    })->name('admin.export-logs-month');
+
     Route::get('/departments-list', function (Request $request){
         $backpackUser = backpack_user();
         if(!empty($backpackUser->id)){

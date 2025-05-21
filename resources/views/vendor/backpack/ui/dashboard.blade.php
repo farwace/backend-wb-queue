@@ -8,6 +8,9 @@
                 @{{ currentDepartment?.name }}
                 <button class="btn btn-secondary" type="button" @click="setDepartment(0)">Назад</button>
                 &nbsp;<a class="btn btn-warnings" :href="'/admin/export-logs/' + currentDepartment.id" target="_blank">Логи 3 дня</a>
+                @if(backpack_user()->is_root == '1')
+                    &nbsp;<a class="btn btn-warnings" :href="'/admin/export-logs-month/' + currentDepartment.id + '?duration=month'" target="_blank">Логи за месяц</a>
+                @endif
             </h2>
         </template>
         <template v-if="cCheckTables && cCheckTables.length > 0">
