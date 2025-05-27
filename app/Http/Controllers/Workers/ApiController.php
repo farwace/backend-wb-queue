@@ -365,6 +365,19 @@ class ApiController extends Controller
         return response()->json(Department::query()->orderBy('code', 'asc')->get());
     }
 
+    public function getDepartmentTablesLength(?string $direction = 'e1')
+    {
+        $cnt = 4;
+        $dep = Department::query()->where('code', $direction)->first();
+        if(!empty($dep)){
+            if(!empty($dep->queue_length)){
+                if($dep->queue_length >= $cnt){
+                    $cnt = $dep->queue_length;
+                }
+            }
+        }
+        return $cnt;
+    }
 
     public function getTables(int $departmentId)
     {

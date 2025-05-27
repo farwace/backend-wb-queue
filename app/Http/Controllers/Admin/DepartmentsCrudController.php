@@ -57,6 +57,12 @@ class DepartmentsCrudController extends CrudController
             'type' => 'text',
             'label' => 'Код',
         ]);
+        $this->crud->addColumn([
+            'name' => 'queue_length',
+            'type' => 'text',
+            'label' => 'Количество столов в очереди',
+        ]);
+
 
         $this->crud->column('sort')->type('integer')->label('Сорт.');
     }
@@ -70,6 +76,7 @@ class DepartmentsCrudController extends CrudController
         $this->crud->field('name')->type('text')->label('Название')->attributes(['required' => 'true']);
         $this->crud->field('code')->type('text')->attributes(['required'=>'true'])->label('Код');
         $this->crud->field('sort')->type('number')->default(500)->label('Сорт.');
+        $this->crud->field('queue_length')->type('number')->default(4)->label('Количество столов в очереди');
     }
 
     /**

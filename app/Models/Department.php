@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property ?string $code
  * @property int $sort
  * @property Table[] $tables
+ * @property int $queue_length
  */
 class Department extends Model{
     use CrudTrait;

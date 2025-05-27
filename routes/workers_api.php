@@ -15,4 +15,5 @@ Route::prefix('v1.0')->group(function (){
     Route::get('/unavailable-tables/{direction}', [ApiController::class, 'getUnavailableTables']);
     Route::post('/check-table', [ApiController::class, 'setTableChecked']);
     Route::get('/department-list', [ApiController::class, 'getDepartmentList']);
+    Route::get('/department-tables-length/{direction}', [ApiController::class, 'getDepartmentTablesLength']);
 });
