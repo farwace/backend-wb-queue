@@ -89,11 +89,19 @@ class ApiController extends Controller
             return $this->failure('Не удалось корректно обработать код сотрудника', 422);
         }
         $worker = Worker::query()->where('code', $badgeCode)->first();
-        $worker->department_id = null;
-        $worker->save();
         if(!$worker){
             return $this->failure('Сотрудник не найден!', 403,403);
         }
+        $logData = [
+            'badge' => $worker->code,
+            'name' => $worker->name,
+            'tableName' => $worker->table->name,
+            'department_id' => $worker->table->department_id,
+            'status' => 'logout',
+            'message' => 'Вышел из аккаунта'
+        ];
+        $worker->department_id = null;
+        $worker->save();
         $table = Table::query()->where('worker_id', $worker->id)->first();
         if(!empty($table)){
             $queue = Queue::query()->where('table_id', $table->id)->where('worker_id', $worker->id)->where('is_closed', false)->first();
@@ -118,6 +126,16 @@ class ApiController extends Controller
             $table->worker_id = null;
             $table->save();
         }
+
+        $queueLog = new QueueLog();
+        $queueLog->worker_badge = $logData['badge'];
+        $queueLog->worker_name = $logData['name'];
+        $queueLog->table = $logData['tableName'];
+        $queueLog->department_id = $logData['department_id'];
+        $queueLog->status = $logData['status'];
+        $queueLog->message = $logData['message'];
+        $queueLog->save();
+
         return $this->success([], 'Success');
     }
     public function selectTable(Request $request): JsonResponse
@@ -143,6 +161,16 @@ class ApiController extends Controller
         if($table && empty($table->worker_id)){
             $table->worker_id = $worker->id;
             $table->save();
+
+            $queueLog = new QueueLog();
+            $queueLog->worker_badge = $worker->code;
+            $queueLog->worker_name = $worker->name;
+            $queueLog->table = $table->name;
+            $queueLog->department_id = $table->department_id;
+            $queueLog->status = 'login';
+            $queueLog->message = 'Занял стол';
+            $queueLog->save();
+
             return $this->success($this->workerInfo($worker), 'Success');
         }
 
