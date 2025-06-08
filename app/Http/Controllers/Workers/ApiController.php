@@ -95,8 +95,8 @@ class ApiController extends Controller
         $logData = [
             'badge' => $worker->code,
             'name' => $worker->name,
-            'tableName' => $worker->table->name,
-            'department_id' => $worker->table->department_id,
+            'tableName' => !empty($worker->table->name) ? $worker->table->name : '',
+            'department_id' => !empty($worker->table->department_id) ? $worker->table->department_id : $worker->department_id,
             'status' => 'logout',
             'message' => 'Вышел из аккаунта'
         ];
