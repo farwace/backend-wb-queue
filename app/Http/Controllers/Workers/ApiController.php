@@ -92,6 +92,30 @@ class ApiController extends Controller
         if(!$worker){
             return $this->failure('Сотрудник не найден!', 403,403);
         }
+
+        if(!empty($worker->table)){
+            $queue = Queue::query()->where('table_id', $worker->table->id)->where('worker_id', $worker->id)->where('is_closed', false)->first();
+            if(!empty($queue)){
+                $logData = [
+                    'badge' => $worker->code,
+                    'name' => $worker->name,
+                    'tableName' => !empty($worker->table->name) ? $worker->table->name : '',
+                    'department_id' => !empty($worker->table->department_id) ? $worker->table->department_id : $worker->department_id,
+                    'status' => 'warning_logout',
+                    'message' => 'Попытался выйти из аккаунта во время ожидания палета!'
+                ];
+                $queueLog = new QueueLog();
+                $queueLog->worker_badge = $logData['badge'];
+                $queueLog->worker_name = $logData['name'];
+                $queueLog->table = $logData['tableName'];
+                $queueLog->department_id = $logData['department_id'];
+                $queueLog->status = $logData['status'];
+                $queueLog->message = $logData['message'];
+                $queueLog->save();
+                return $this->failure('Нельзя завершить сессию во время ожидания палета.');
+            }
+        }
+
         $logData = [
             'badge' => $worker->code,
             'name' => $worker->name,
