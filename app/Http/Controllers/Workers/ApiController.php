@@ -112,7 +112,7 @@ class ApiController extends Controller
                 $queueLog->status = $logData['status'];
                 $queueLog->message = $logData['message'];
                 $queueLog->save();
-                return $this->failure('Нельзя завершить сессию во время ожидания палета.');
+                return $this->failure('Замечена подозрительная активность! При повторе информация будет отправлена старшему!');
             }
         }
 
