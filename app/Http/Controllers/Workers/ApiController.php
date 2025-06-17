@@ -419,7 +419,7 @@ class ApiController extends Controller
 
     public function getDepartmentTablesLength(?string $direction = 'e1')
     {
-        $cnt = 4;
+        $cnt = 1;
         $dep = Department::query()->where('code', $direction)->first();
         if(!empty($dep)){
             if(!empty($dep->queue_length)){
