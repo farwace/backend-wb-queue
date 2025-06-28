@@ -10,6 +10,9 @@ class ApiController extends ReportsReplyController
 {
     use RespondsWithHttpStatus;
 
-
+    public function submit()
+    {
+        return $this->success([], 'aaaa');
+    }
 
 }

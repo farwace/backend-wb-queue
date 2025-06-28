@@ -7,4 +7,5 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1.0')->group(function (){
 
     Route::post('try-auth', [ApiController::class, 'tryAuth']);
+    Route::post('submit/{direction_code}', [ApiController::class, 'submit']);
 });
