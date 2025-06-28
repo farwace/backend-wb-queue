@@ -35,9 +35,11 @@ class Report extends Model{
     protected static function booted()
     {
         static::deleting(function (Report $report) {
-            foreach ($report->videos as $filePath) {
-                if ($filePath && Storage::disk('s3')->exists($filePath)) {
-                    Storage::disk('s3')->delete($filePath);
+            if(!empty($report->videos && is_array($report->videos))){
+                foreach ($report->videos as $filePath) {
+                    if ($filePath && Storage::disk('s3')->exists($filePath)) {
+                        Storage::disk('s3')->delete($filePath);
+                    }
                 }
             }
         });

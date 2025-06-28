@@ -15,15 +15,15 @@ class SubmitReportRequest extends FormRequest{
     {
         return [
             'barcode' => 'required',
-            'shortage' => 'required',
-            'surplus' => 'required',
-            'through' => 'required',
-            'depersonalization_barcode' => 'required',
+            'shortage' => 'sometimes',
+            'surplus' => 'sometimes',
+            'through' => 'sometimes',
+            'depersonalization_barcode' => 'sometimes',
             'worker' => 'required',
             'table' => 'required',
-            'reason' => 'required',
-            'count' => 'required',
-            'videos' => 'required | array',
+            'reason' => 'sometimes',
+            'count' => 'sometimes',
+            'videos' => 'sometimes | array',
             'videos.*' => 'required | file',
         ];
     }
