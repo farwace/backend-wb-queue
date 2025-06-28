@@ -37,8 +37,6 @@ Route::group([
         return $logsExport->execute('department-' . $departmentId . '-month', ['departmentId' => $departmentId]);
     })->name('admin.export-logs-month');
 
-    Route::get('queue-stats', 'QueueStatsController@index')->name('queue-stats.index');
-
     Route::get('/departments-list', function (Request $request){
         $backpackUser = backpack_user();
         if(!empty($backpackUser->id)){
