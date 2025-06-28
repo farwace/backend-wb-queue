@@ -24,8 +24,8 @@ return new class extends Migration
         });
 
         Schema::table('reports', function (Blueprint $table) {
-            $table->string('receipts');
-            $table->string('type');
+            $table->string('receipts')->nullable();
+            $table->string('type')->nullable();
         });
     }
 
