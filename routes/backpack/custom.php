@@ -26,7 +26,7 @@ Route::group([
     Route::crud('queue', 'QueueCrudController');
     Route::crud('loaders-settings', 'LoadersSettingsCrudController');
     Route::crud('reports', 'ReportsCrudController');
-//    Route::crud('replies', 'RepliesCrudController');
+    Route::crud('replies', 'RepliesCrudController');
     Route::crud('admins', 'AdminsCrudController');
     Route::get('/export-logs/{departmentId}', function ($departmentId, Request $request) {
         $logsExport = new LogsExport();

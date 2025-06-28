@@ -9,36 +9,28 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Сотрудник приемки
  * @property int $id
  * @property \DateTime $created_at
  * @property \DateTime $updated_at
  * @property Department $department
  * @property ?int $department_id
- * @property ?string $barcode
- * @property ?string $shortage
- * @property ?string $surplus
- * @property ?string $through
- * @property ?string $depersonalization_barcode
- * @property ?string $worker
- * @property ?string $table
  * @property ?string $reason
- * @property ?string $count
+ * @property ?string $receiptNumber
+ * @property ?string $vehicleNumber
+ * @property ?string $gateNumbers
  * @property ?array $videos
- * @property ?string $receipts
- * @property ?string $type
  */
-class Report extends Model{
+class Reply extends Model{
     use CrudTrait;
 
-    protected $table = 'reports';
+    protected $table = 'reply';
     protected $guarded = ['id'];
 
     protected static function booted()
     {
-        static::deleting(function (Report $report) {
-            if(!empty($report->videos && is_array($report->videos))){
-                foreach ($report->videos as $filePath) {
+        static::deleting(function (Reply $reply) {
+            if(!empty($reply->videos && is_array($reply->videos))){
+                foreach ($reply->videos as $filePath) {
                     if ($filePath && Storage::disk('s3')->exists($filePath)) {
                         Storage::disk('s3')->delete($filePath);
                     }

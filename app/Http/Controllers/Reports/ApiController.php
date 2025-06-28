@@ -47,6 +47,6 @@ class ApiController extends ReportsReplyController
         $report->videos = $arPath;
         $report->save();
 
-        return $this->success($arPath);
+        return $this->success();
     }
 }
