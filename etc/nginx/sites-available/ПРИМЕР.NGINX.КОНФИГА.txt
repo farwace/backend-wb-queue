@@ -1,0 +1,16 @@
+#Такой простой файлик без ssl создается для домена
+#Затем выполнить команду sudo certbot --nginx -d test1.mydomain.ru
+# и letsencrypt сделает своё дело
+server {
+    server_name test1.mydomain.ru;
+
+    root /var/www/test1.mydomain.ru/dist;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    listen 80;
+
+}
