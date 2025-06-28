@@ -23,6 +23,7 @@ class SubmitReportRequest extends FormRequest{
             'table' => 'required',
             'reason' => 'sometimes',
             'count' => 'sometimes',
+            'type' => 'sometimes',
             'videos' => 'sometimes | array',
             'videos.*' => 'required | file',
         ];
@@ -41,6 +42,7 @@ class SubmitReportRequest extends FormRequest{
             'reason' => '«Причина обезлички»',
             'count' => '«Количество»',
             'videos' => '«Обезличка видео»',
+            'type' => '«Тип»',
         ];
     }
 }

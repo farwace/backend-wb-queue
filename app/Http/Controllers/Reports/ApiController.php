@@ -34,6 +34,7 @@ class ApiController extends ReportsReplyController
         $report->table = !empty($arData['table']) ? $arData['table'] : '';
         $report->reason = !empty($arData['reason']) ? $arData['reason'] : '';
         $report->count = !empty($arData['count']) ? $arData['count'] : '';
+        $report->type = !empty($arData['type']) ? $arData['type'] : '';
         $report->department_id = $direction->id;
 
         $arPath = [];

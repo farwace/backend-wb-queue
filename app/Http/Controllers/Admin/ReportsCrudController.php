@@ -84,6 +84,12 @@ class ReportsCrudController extends CrudController
             'label' => 'ШК',
         ]);
         $this->crud->addColumn([
+            'name' => 'type',
+            'type' => 'text',
+            'label' => 'Тип',
+        ]);
+
+        $this->crud->addColumn([
             'name' => 'shortage',
             'type' => 'text',
             'label' => 'Недостача',
@@ -98,11 +104,7 @@ class ReportsCrudController extends CrudController
             'type' => 'text',
             'label' => 'Через "ДА"',
         ]);
-        $this->crud->addColumn([
-            'name' => 'depersonalization_barcode',
-            'type' => 'text',
-            'label' => 'Обезличка ШК',
-        ]);
+
         $this->crud->addColumn([
             'name' => 'worker',
             'type' => 'text',
@@ -144,6 +146,11 @@ class ReportsCrudController extends CrudController
             'label' => 'ШК',
         ]);
         $this->crud->addField([
+            'name' => 'type',
+            'type' => 'text',
+            'label' => 'Тип',
+        ]);
+        $this->crud->addField([
             'name' => 'shortage',
             'type' => 'text',
             'label' => 'Недостача',
@@ -158,11 +165,7 @@ class ReportsCrudController extends CrudController
             'type' => 'text',
             'label' => 'Через "ДА"',
         ]);
-        $this->crud->addField([
-            'name' => 'depersonalization_barcode',
-            'type' => 'text',
-            'label' => 'Обезличка ШК',
-        ]);
+
         $this->crud->addField([
             'name' => 'worker',
             'type' => 'text',
