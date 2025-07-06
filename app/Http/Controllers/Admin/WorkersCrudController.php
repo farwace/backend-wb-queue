@@ -109,14 +109,25 @@ class WorkersCrudController extends CrudController
         /** @var Worker $entry */
         $entry = $this->crud->getCurrentEntry();
 
-        $this->crud->addField([
-            'name' => 'enterQueueBtn',
-            'type' => 'view',
-            'view' => 'admin/fields/enter-queue',
-            'label' => 'Заказ товара',
-            'badgeCode' => $entry->code,
-            'url' => '/api/worker/v1.0/enter-queue',
-            'directionCode' => $entry->department->code,
-        ]);
+        $directionCode = null;
+        if(!empty($entry->table->department->code)){
+            $directionCode = $entry->table->department->code;
+        }
+        else{
+            if(!empty($entry->department->code)){
+                $directionCode = $entry->department->code;
+            }
+        }
+        if(!empty($directionCode)){
+            $this->crud->addField([
+                'name' => 'enterQueueBtn',
+                'type' => 'view',
+                'view' => 'admin/fields/enter-queue',
+                'label' => 'Заказ товара',
+                'badgeCode' => $entry->code,
+                'url' => '/api/worker/v1.0/enter-queue',
+                'directionCode' => $directionCode,
+            ]);
+        }
     }
 }
