@@ -223,6 +223,13 @@ class ApiController extends Controller
         }
         $tableId = $worker->table->id;
 
+        if(empty($worker->table->department->code)){
+            return $this->failure('Утеряно направление (Ссылка: '. $direction .'), Обратитесь к старшему!', 422);
+        }
+        if($worker->table->department->code !== $direction){
+            return $this->failure('Ошибка направления (Ссылка: '. $direction .', в системе: ' . $worker->table->department->code . ' ), Обратитесь к старшему!', 422);
+        }
+
         $arWorkerInfo = $this->workerInfo($worker);
         if(!empty($arWorkerInfo['inQueue'])){
             return $this->failure('Вы уже на очереди!', 422);
@@ -412,6 +419,7 @@ class ApiController extends Controller
         return $this->failure('Error!');
     }
 
+    /** @deprecated  */
     public function getDepartmentList()
     {
         return response()->json(Department::query()->orderBy('code', 'asc')->get());
@@ -443,8 +451,6 @@ class ApiController extends Controller
 
     public function workerInfo($worker): array
     {
-        $departmentId = $worker->department_id ?: 1;
-
         $table = $worker->table;
         $inQueue = false;
         if(!empty($table)){
@@ -454,7 +460,12 @@ class ApiController extends Controller
             if($queue){
                 $inQueue = true;
             }
+            $departmentId = $table->department_id;
         }
+        if(empty($departmentId)){
+            $departmentId = $worker->department_id ?: 0;
+        }
+
         $arResult = array_merge($worker->toArray(), ['tables' => $this->getTables($departmentId), 'inQueue' => $inQueue]);
         if(!empty($tableName)){
             $arResult = array_merge($arResult, ['table' => $tableName]);

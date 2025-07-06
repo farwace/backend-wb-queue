@@ -113,11 +113,7 @@ class WorkersCrudController extends CrudController
         if(!empty($entry->table->department->code)){
             $directionCode = $entry->table->department->code;
         }
-        else{
-            if(!empty($entry->department->code)){
-                $directionCode = $entry->department->code;
-            }
-        }
+
         if(!empty($directionCode)){
             $this->crud->addField([
                 'name' => 'enterQueueBtn',
