@@ -45,6 +45,20 @@ class LoadersSettingsCrudController extends CrudController
      */
     protected function setupListOperation()
     {
+
+        $backpackUser = backpack_user();
+        if(!empty($backpackUser)){
+            if(!$backpackUser->is_root) {
+                if (backpack_user()->departments) {
+                    $arIds = [];
+                    foreach (backpack_user()->departments as $department) {
+                        $arIds[] = $department->id;
+                    }
+                    $this->crud->addClause('whereIn', 'department_id', $arIds);
+                }
+            }
+        }
+
         $this->crud->column('id')->type('number')->label('#');
 
         $this->crud->addColumn([

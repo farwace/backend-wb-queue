@@ -45,6 +45,24 @@ class QueueCrudController extends CrudController
     protected function setupListOperation()
     {
         $this->crud->addClause('where', 'is_closed', false);
+
+        $backpackUser = backpack_user();
+        if(!empty($backpackUser)){
+            if(!$backpackUser->is_root) {
+                if ($backpackUser->departments) {
+                    $arIds = [];
+                    foreach ($backpackUser->departments as $department) {
+                        $arIds[] = $department->id;
+                    }
+                    $this->crud->addClause('whereHas', 'table', function ($query) use ($arIds) {
+                        $query->whereHas('department', function ($query1) use ($arIds) {
+                            $query1->whereIn('id', $arIds);
+                        });
+                    });
+                }
+            }
+        }
+
         $this->crud->removeButton('create');
         $this->crud->removeButton('delete');
         $this->crud->column('id')->type('number')->label('#');

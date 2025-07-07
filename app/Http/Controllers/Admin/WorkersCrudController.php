@@ -45,6 +45,24 @@ class WorkersCrudController extends CrudController
      */
     protected function setupListOperation()
     {
+
+        $backpackUser = backpack_user();
+        if(!empty($backpackUser)){
+            if(!$backpackUser->is_root) {
+                if ($backpackUser->departments) {
+                    $arIds = [];
+                    foreach ($backpackUser->departments as $department) {
+                        $arIds[] = $department->id;
+                    }
+                    $this->crud->addClause('whereHas', 'table', function ($query) use ($arIds) {
+                        $query->whereHas('department', function ($query1) use ($arIds) {
+                            $query1->whereIn('id', $arIds);
+                        });
+                    });
+                }
+            }
+        }
+
         $this->crud->column('id')->type('number')->label('#');
         $this->crud->addColumn([
             'name' => 'name',

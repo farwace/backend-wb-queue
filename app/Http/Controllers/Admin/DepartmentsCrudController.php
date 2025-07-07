@@ -45,6 +45,22 @@ class DepartmentsCrudController extends CrudController
     protected function setupListOperation()
     {
         $this->crud->removeButton('delete');
+
+        $backpackUser = backpack_user();
+        if(!empty($backpackUser)){
+            if(!($backpackUser->is_root)){
+                $this->crud->removeButton('create');
+
+                if($backpackUser->departments){
+                    $arIds = [];
+                    foreach ($backpackUser->departments as $department){
+                        $arIds[] = $department->id;
+                    }
+                    $this->crud->addClause('whereIn', 'id', $arIds);
+                }
+            }
+        }
+
         $this->crud->column('id')->type('number')->label('#');
 
         $this->crud->addColumn([
@@ -69,15 +85,17 @@ class DepartmentsCrudController extends CrudController
 
     protected function setupShowOperation()
     {
-       $this->setupListOperation();
+        $this->setupListOperation();
     }
 
     protected function setupCreateOperation(){
-        $this->crud->field('name')->type('text')->label('Название')->attributes(['required' => 'true']);
-        $this->crud->field('code')->type('text')->attributes(['required'=>'true'])->label('Код');
-        $this->crud->field('sort')->type('number')->default(500)->label('Сорт.');
-        $this->crud->field('queue_length')->type('number')->default(4)->label('Количество столов в очереди');
-        $this->crud->field('password')->type('text')->label('Пароль для открытия страниц');
+        if(backpack_user()->is_root) {
+            $this->crud->field('name')->type('text')->label('Название')->attributes(['required' => 'true']);
+            $this->crud->field('code')->type('text')->attributes(['required' => 'true'])->label('Код');
+            $this->crud->field('sort')->type('number')->default(500)->label('Сорт.');
+            $this->crud->field('queue_length')->type('number')->default(4)->label('Количество столов в очереди');
+            $this->crud->field('password')->type('text')->label('Пароль для открытия страниц');
+        }
     }
 
     /**
@@ -88,6 +106,12 @@ class DepartmentsCrudController extends CrudController
      */
     protected function setupUpdateOperation()
     {
-        $this->setupCreateOperation();
+        if(backpack_user()->is_root){
+            $this->setupCreateOperation();
+        }
+        else{
+            $this->crud->field('password')->type('text')->label('Пароль для открытия страниц');
+        }
+
     }
 }

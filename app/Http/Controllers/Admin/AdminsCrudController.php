@@ -52,6 +52,13 @@ class AdminsCrudController extends CrudController
     protected function setupListOperation()
     {
 
+        $backpackUser = backpack_user();
+        if(!empty($backpackUser)){
+            if(!$backpackUser->is_root) {
+                $this->crud->removeButton('create');
+            }
+        }
+
         $this->crud->column('id')->type('number')->label('#');
 
         $this->crud->addColumn([
@@ -79,28 +86,34 @@ class AdminsCrudController extends CrudController
     }
 
     protected function setupCreateOperation(){
-        $this->crud->field('name')->type('text')->label('Имя')->attributes(['required' => 'true']);
-        $this->crud->field('email')->type('text')->attributes(['required'=>'true'])->label('Email');
-        $this->crud->addField([
-            'name' => 'password',
-            'type' => 'password',
-            'label' => 'Пароль'
-        ]);
+        $backpackUser = backpack_user();
+        if(!empty($backpackUser)){
+            if($backpackUser->is_root) {
+                $this->crud->field('name')->type('text')->label('Имя')->attributes(['required' => 'true']);
+                $this->crud->field('email')->type('text')->attributes(['required'=>'true'])->label('Email');
+                $this->crud->addField([
+                    'name' => 'password',
+                    'type' => 'password',
+                    'label' => 'Пароль'
+                ]);
 
-        $selectedDepartments = [];
-        $entity = $this->crud->getCurrentEntry();
-        if(!empty($entity)){
-            $selectedDepartments = AdminDepartment::query()->where('admin_id', $entity->id)->pluck('department_id')->toArray();
+                $selectedDepartments = [];
+                $entity = $this->crud->getCurrentEntry();
+                if(!empty($entity)){
+                    $selectedDepartments = AdminDepartment::query()->where('admin_id', $entity->id)->pluck('department_id')->toArray();
+                }
+                CRUD::addField([
+                    'name'  => 'departments_custom',
+                    'label' => 'Направления',
+                    'type'  => 'select_from_array',
+                    'options' => Department::pluck('name', 'id')->toArray(),
+                    'allows_null' => false,
+                    'allows_multiple' => true,
+                    'default' => $selectedDepartments,
+                ]);
+            }
         }
-        CRUD::addField([
-            'name'  => 'departments_custom',
-            'label' => 'Направления',
-            'type'  => 'select_from_array',
-            'options' => Department::pluck('name', 'id')->toArray(),
-            'allows_null' => false,
-            'allows_multiple' => true,
-            'default' => $selectedDepartments,
-        ]);
+
     }
 
     /**

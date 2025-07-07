@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $color
  * @property boolean $active
  * @property ?string $name
+ * @property int $department_id
  */
 class LoadersSettings extends Model{
     use CrudTrait, LogsActivity;
