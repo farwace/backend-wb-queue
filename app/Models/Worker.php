@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Traits\LogsActivity;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property ?Table $table
  */
 class Worker extends Model{
-    use CrudTrait;
+    use CrudTrait, LogsActivity;
 
     protected $table = 'workers';
     protected $guarded = ['id'];

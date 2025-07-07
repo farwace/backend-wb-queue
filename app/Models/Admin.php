@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Traits\LogsActivity;
 use Backpack\CRUD\app\Exceptions\AccessDeniedException;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -22,7 +23,7 @@ use Illuminate\Support\Facades\Hash;
  */
 class Admin extends Authenticatable
 {
-    use CrudTrait, HasFactory, Notifiable;
+    use CrudTrait, HasFactory, Notifiable, LogsActivity;
 
     const PERMISSION_LIST = 'list';
     const PERMISSION_CREATE = 'create';

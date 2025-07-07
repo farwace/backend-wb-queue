@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Traits\LogsActivity;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -18,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $queue_length
  */
 class Department extends Model{
-    use CrudTrait;
+    use CrudTrait, LogsActivity;
 
     protected $table = 'departments';
     protected $guarded = ['id'];

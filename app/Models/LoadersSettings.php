@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Traits\LogsActivity;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property ?string $name
  */
 class LoadersSettings extends Model{
-    use CrudTrait;
+    use CrudTrait, LogsActivity;
 
     protected $table = 'loaders_settings';
     protected $guarded = ['id'];

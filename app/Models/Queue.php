@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Events\OrderRequested;
+use App\Models\Traits\LogsActivity;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
