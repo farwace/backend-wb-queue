@@ -17,6 +17,8 @@ Route::prefix('v1.0')->group(function (){
     Route::get('/queue/{direction}', [ApiController::class, 'getQueue']);
     Route::get('/department-tables-length/{direction}', [ApiController::class, 'getDepartmentTablesLength']); //Ограничение сколько столов показывать на странице грузчиков
 
+    Route::get('/get-param/{param_name}', [ApiController::class, 'getParamValue']);
+
     //Для админов
     Route::get('/unavailable-tables/{direction}', [ApiController::class, 'getUnavailableTables']);
     Route::post('/check-table', [ApiController::class, 'setTableChecked']);

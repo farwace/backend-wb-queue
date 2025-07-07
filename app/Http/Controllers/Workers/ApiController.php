@@ -359,8 +359,18 @@ class ApiController extends Controller
     }
 
 
-    public function getQueue(?string $direction = 'e1'):JsonResponse
+    public function getQueue(Request $request, ?string $direction = 'e1'):JsonResponse
     {
+        if(config('app.password-required', false)){
+            $pass = $request->headers->get('Auth-string');
+            $dep = Department::query()->where('code', $direction)->first();
+            if(!empty($dep)){
+                if($dep->password !== $pass){
+                    return $this->failure('Неверный пароль!', 401, 401);
+                }
+            }
+        }
+
         $queue = Queue::query()->where('is_closed', false)
             ->whereHas('table.department', function ($query) use ($direction) {
                 $query->where('code', $direction);
@@ -423,6 +433,15 @@ class ApiController extends Controller
     public function getDepartmentList()
     {
         return response()->json(Department::query()->orderBy('code', 'asc')->get());
+    }
+
+    public function getParamValue(string $paramName)
+    {
+        $val = null;
+        if(config()->has($paramName)){
+            $val = config()->get($paramName);
+        }
+        return response()->json($val);
     }
 
     public function getDepartmentTablesLength(?string $direction = 'e1')
