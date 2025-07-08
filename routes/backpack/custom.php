@@ -28,14 +28,28 @@ Route::group([
     Route::crud('reports', 'ReportsCrudController');
     Route::crud('replies', 'RepliesCrudController');
     Route::crud('admins', 'AdminsCrudController');
+
     Route::get('/export-logs/{departmentId}', function ($departmentId, Request $request) {
         $logsExport = new LogsExport();
         return $logsExport->execute('department-' . $departmentId, ['departmentId' => $departmentId]);
     })->name('admin.export-logs');
+
     Route::get('/export-logs-month/{departmentId}', function ($departmentId, Request $request) {
         $logsExport = new LogsExportMonth();
         return $logsExport->execute('department-' . $departmentId . '-month', ['departmentId' => $departmentId]);
     })->name('admin.export-logs-month');
+
+    Route::get('/reports-export', function (Request $request) {
+        $reportsExport = new ReportsExport();
+        return $reportsExport->execute('reports', []);
+    })->name('admin.reports-export');
+
+    Route::get('/replies-export', function (Request $request) {
+        $repliesExport = new RepliesExport();
+        return $repliesExport->execute('replies', []);
+    })->name('admin.reports-export');
+
+
 
     Route::get('/departments-list', function (Request $request){
         $backpackUser = backpack_user();

@@ -52,4 +52,10 @@ class Reply extends Model{
         );
     }
 
+    public function exportButtonContent()
+    {
+        return '<a href="/admin/replies-export" target="_blank" class="btn btn-primary" data-style="zoom-in">
+                    <i class="la la-file-csv"></i> <span>Экспорт</span>
+                </a>';
+    }
 }

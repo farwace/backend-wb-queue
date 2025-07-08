@@ -49,7 +49,7 @@ class RepliesCrudController extends CrudController
      */
     protected function setupListOperation()
     {
-
+        $this->crud->addButton('top', 'export', 'model_function', 'exportButtonContent');
         $backpackUser = backpack_user();
         if(!empty($backpackUser)){
             if(!$backpackUser->is_root){
