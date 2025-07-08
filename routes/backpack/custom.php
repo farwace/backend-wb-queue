@@ -2,6 +2,8 @@
 
 use App\Http\Exports\LogsExport;
 use App\Http\Exports\LogsExportMonth;
+use App\Http\Exports\RepliesExport;
+use App\Http\Exports\ReportsExport;
 use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +28,7 @@ Route::group([
     Route::crud('queue', 'QueueCrudController');
     Route::crud('loaders-settings', 'LoadersSettingsCrudController');
     Route::crud('reports', 'ReportsCrudController');
+    Route::crud('incidents', 'IncidentsCrudController');
     Route::crud('replies', 'RepliesCrudController');
     Route::crud('admins', 'AdminsCrudController');
 

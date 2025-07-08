@@ -12,6 +12,7 @@
 <x-backpack::menu-item title="Грузчики" icon="la la-hard-hat" :link="backpack_url('loaders-settings')" />
 <x-backpack::menu-item title="Отписки сотрудников" icon="la la-sticky-note" :link="backpack_url('reports')" />
 <x-backpack::menu-item title="Отписки грузчиков" icon="la la-ticket" :link="backpack_url('replies')" />
+<x-backpack::menu-item title="Инциденты" icon="la la-comment" :link="backpack_url('incidents')" />
 @if(backpack_user()->is_root)
 <x-backpack::menu-item title="Activity Logs" icon="la la-stream" :link="backpack_url('activity-log')" />
 @endif
