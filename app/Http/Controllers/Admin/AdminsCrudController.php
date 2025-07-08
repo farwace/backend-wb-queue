@@ -114,6 +114,12 @@ class AdminsCrudController extends CrudController
             }
         }
 
+        $this->crud->setValidationFromArray([
+            'email' => 'required|email|unique:admins,email',
+            'name' => 'required|string|max:255',
+            'password' => 'required|string|max:255',
+        ]);
+
     }
 
     /**
