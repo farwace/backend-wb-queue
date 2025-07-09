@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Exports\IncidentsExport;
 use App\Http\Exports\LogsExport;
 use App\Http\Exports\LogsExportMonth;
 use App\Http\Exports\RepliesExport;
@@ -51,6 +52,11 @@ Route::group([
         $repliesExport = new RepliesExport();
         return $repliesExport->execute('replies', []);
     })->name('admin.replies-export');
+
+    Route::get('/incidents-export', function (Request $request) {
+        $incidentsExport = new IncidentsExport();
+        return $incidentsExport->execute('incidents', []);
+    })->name('admin.incidents-export');
 
 
 

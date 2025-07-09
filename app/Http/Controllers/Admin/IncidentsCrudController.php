@@ -45,7 +45,7 @@ class IncidentsCrudController extends CrudController
      */
     protected function setupListOperation()
     {
-
+        $this->crud->addButton('top', 'export', 'model_function', 'exportButtonContent');
         $this->crud->removeButton('update');
         $this->crud->removeButton('create');
 
