@@ -50,7 +50,7 @@ Route::group([
     Route::get('/replies-export', function (Request $request) {
         $repliesExport = new RepliesExport();
         return $repliesExport->execute('replies', []);
-    })->name('admin.reports-export');
+    })->name('admin.replies-export');
 
 
 
