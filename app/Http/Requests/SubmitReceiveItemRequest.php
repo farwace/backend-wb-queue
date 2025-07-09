@@ -17,6 +17,7 @@ class SubmitReceiveItemRequest extends FormRequest{
             'direction' => 'required|string',
             'attachments' => 'sometimes | array',
             'attachments.*' => 'required | file',
+            'message' => 'required|string',
             'is_admin' => 'sometimes'
         ];
     }
@@ -26,6 +27,7 @@ class SubmitReceiveItemRequest extends FormRequest{
         return [
             'direction' => '«Направление»',
             'attachments' => '«Вложения»',
+            'message' => '«Номер короба»'
         ];
     }
 }

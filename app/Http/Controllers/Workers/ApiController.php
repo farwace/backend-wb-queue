@@ -143,8 +143,8 @@ class ApiController extends Controller
 
             $incident = new Incident();
             $incident->attachments = $arPath;
-            $incident->type = 'leaveTable';
-            $incident->message = 'Покинул рабочее место';
+            $incident->type = 'Выход';
+            $incident->message = '';
             $incident->department_id = $worker->table->department_id;
             $incident->worker_name = $worker->name ?: '';
             $incident->worker_code = $badgeCode;
@@ -335,16 +335,6 @@ class ApiController extends Controller
 
         $queue = Queue::query()->where('table_id', $tableId)->where('worker_id', $worker->id)->where('is_closed', false)->orderBy('id', 'desc')->first();
 
-        if (empty($request->validated('is_admin'))) {
-            $arAttachments = $request->validated('attachments');
-            if (count($arAttachments ?: []) < 1) {
-                return $this->failure('Прикрепите фото');
-            }
-            if (empty($worker->table->department->code)) {
-                return $this->failure('Утерена привязка к направлению - обратитесь к старшему');
-            }
-        }
-
         if($queue){
             if(abs(Carbon::now()->diffInSeconds($queue->created_at)) < 55){
                 $queueLog = new QueueLog();
@@ -358,10 +348,23 @@ class ApiController extends Controller
 
                 return $this->failure('Замечена подозрительная активность! При повторе информация будет отправлена старшему!', 422);
             }
-            event(new OrderRequested($worker->table->department->code, $worker->table->id, true, $worker->table->code, $worker->table->name, $worker->name, $queue->updated_at));
+
             //OrderRequested::dispatch($queue->id, true, $worker->table->code, $worker->table->name, $worker->name);
         }
+
         if (empty($request->validated('is_admin'))) {
+            $arAttachments = $request->validated('attachments');
+            if (count($arAttachments ?: []) < 1) {
+                return $this->failure('Прикрепите фото');
+            }
+            if (empty($worker->table->department->code)) {
+                return $this->failure('Утерена привязка к направлению - обратитесь к старшему');
+            }
+            $msg = $request->validated('message');
+            if(empty($msg)){
+                return $this->failure('Укажите номер короба');
+            }
+
             $arPath = [];
             if (!empty($arAttachments)) {
                 /** @var UploadedFile $file */
@@ -373,12 +376,16 @@ class ApiController extends Controller
 
             $incident = new Incident();
             $incident->attachments = $arPath;
-            $incident->type = 'receiveItem';
-            $incident->message = 'Получил товар';
+            $incident->type = 'Товар получен';
+            $incident->message = $msg ?: '';
             $incident->department_id = $worker->table->department_id;
             $incident->worker_name = $worker->name ?: '';
             $incident->worker_code = $badgeCode;
             $incident->save();
+        }
+
+        if($queue){
+            event(new OrderRequested($worker->table->department->code, $worker->table->id, true, $worker->table->code, $worker->table->name, $worker->name, $queue->updated_at));
         }
 
         /** @var Queue $queue */
