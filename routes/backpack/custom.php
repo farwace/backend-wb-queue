@@ -78,6 +78,11 @@ Route::group([
 
     })->name('admin.departmentsList');
 
+    // Statistics routes
+    Route::get('/statistics', 'StatisticsController@index')->name('admin.statistics');
+    Route::get('/statistics/department/{departmentId}/chart', 'StatisticsController@getDepartmentChartData')->name('admin.statistics.department.chart');
+    Route::get('/statistics/worker', 'StatisticsController@getWorkerStats')->name('admin.statistics.worker');
+
 }); // this should be the absolute last line of this file
 
 /**
