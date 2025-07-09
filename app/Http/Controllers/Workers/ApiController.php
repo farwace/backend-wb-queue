@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Workers;
 
 use App\Events\OrderRequested;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SubmitLeaveTableRequest;
+use App\Http\Requests\SubmitReceiveItemRequest;
 use App\Http\Resources\QueueResource;
 use App\Http\Traits\RespondsWithHttpStatus;
 use App\Models\Department;
+use App\Models\Incident;
 use App\Models\LoadersSettings;
 use App\Models\Queue;
 use App\Models\QueueLog;
@@ -15,6 +18,7 @@ use App\Models\Worker;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 
@@ -82,7 +86,7 @@ class ApiController extends Controller
 
     }
 
-    public function leaveTable(Request $request): JsonResponse
+    public function leaveTable(SubmitLeaveTableRequest $request): JsonResponse
     {
         $badgeCode = $request->headers->get('badge-code');
         if(empty($badgeCode) || !is_numeric($badgeCode)){
@@ -114,6 +118,37 @@ class ApiController extends Controller
                 $queueLog->save();
                 return $this->failure('Замечена подозрительная активность! При повторе информация будет отправлена старшему!');
             }
+        }
+
+
+        if (empty($request->validated('is_admin'))) {
+
+            $arAttachments = $request->validated('attachments');
+            if (count($arAttachments ?: []) < 1) {
+                return $this->failure('Прикрепите фото');
+            }
+            if (empty($worker->table->department->code)) {
+                return $this->failure('Утерена привязка к направлению - обратитесь к старшему');
+            }
+
+
+            $arPath = [];
+            if (!empty($arAttachments)) {
+                /** @var UploadedFile $file */
+                foreach ($arAttachments as $file) {
+                    $path = $file->store('incidents/' . $worker->table->department->code . '/' . now()->format('Y-m-d'), 's3');
+                    $arPath[] = $path;
+                }
+            }
+
+            $incident = new Incident();
+            $incident->attachments = $arPath;
+            $incident->type = 'leaveTable';
+            $incident->message = 'Покинул рабочее место';
+            $incident->department_id = $worker->table->department_id;
+            $incident->worker_name = $worker->name ?: '';
+            $incident->worker_code = $badgeCode;
+            $incident->save();
         }
 
         $logData = [
@@ -281,7 +316,7 @@ class ApiController extends Controller
         return $this->success($arWorkerInfo, 'Success');
     }
 
-    public function receiveItem(Request $request): JsonResponse
+    public function receiveItem(SubmitReceiveItemRequest $request): JsonResponse
     {
         $badgeCode = $request->headers->get('badge-code');
         if(empty($badgeCode) || !is_numeric($badgeCode)){
@@ -299,6 +334,17 @@ class ApiController extends Controller
         $tableId = $worker->table->id;
 
         $queue = Queue::query()->where('table_id', $tableId)->where('worker_id', $worker->id)->where('is_closed', false)->orderBy('id', 'desc')->first();
+
+        if (empty($request->validated('is_admin'))) {
+            $arAttachments = $request->validated('attachments');
+            if (count($arAttachments ?: []) < 1) {
+                return $this->failure('Прикрепите фото');
+            }
+            if (empty($worker->table->department->code)) {
+                return $this->failure('Утерена привязка к направлению - обратитесь к старшему');
+            }
+        }
+
         if($queue){
             if(abs(Carbon::now()->diffInSeconds($queue->created_at)) < 55){
                 $queueLog = new QueueLog();
@@ -315,6 +361,26 @@ class ApiController extends Controller
             event(new OrderRequested($worker->table->department->code, $worker->table->id, true, $worker->table->code, $worker->table->name, $worker->name, $queue->updated_at));
             //OrderRequested::dispatch($queue->id, true, $worker->table->code, $worker->table->name, $worker->name);
         }
+        if (empty($request->validated('is_admin'))) {
+            $arPath = [];
+            if (!empty($arAttachments)) {
+                /** @var UploadedFile $file */
+                foreach ($arAttachments as $file) {
+                    $path = $file->store('incidents/' . $worker->table->department->code . '/' . now()->format('Y-m-d'), 's3');
+                    $arPath[] = $path;
+                }
+            }
+
+            $incident = new Incident();
+            $incident->attachments = $arPath;
+            $incident->type = 'receiveItem';
+            $incident->message = 'Получил товар';
+            $incident->department_id = $worker->table->department_id;
+            $incident->worker_name = $worker->name ?: '';
+            $incident->worker_code = $badgeCode;
+            $incident->save();
+        }
+
         /** @var Queue $queue */
         $queue = Queue::query()->where('table_id', $tableId)->where('worker_id', $worker->id)->where('is_closed', false)->first();
         /** @var Queue $firstQueue */

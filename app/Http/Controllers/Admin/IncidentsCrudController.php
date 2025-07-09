@@ -46,7 +46,7 @@ class IncidentsCrudController extends CrudController
     protected function setupListOperation()
     {
 
-        $this->crud->removeButton('edit');
+        $this->crud->removeButton('update');
         $this->crud->removeButton('create');
 
         $backpackUser = backpack_user();
@@ -109,7 +109,7 @@ class IncidentsCrudController extends CrudController
             'name' => 'attachments',
             'type' => 'view',
             'label' => 'Вложения',
-            'view' => 'admin/columns/report-video'
+            'view' => 'admin/columns/report-photo'
         ]);
 
     }
