@@ -14,7 +14,7 @@ class SubmitLeaveTableRequest extends FormRequest{
     public function rules(): array
     {
         return [
-            'direction' => 'required|string',
+            'direction' => 'sometimes|string',
             'attachments' => 'sometimes | array',
             'attachments.*' => 'required | file',
             'is_admin' => 'sometimes'

@@ -199,6 +199,9 @@
                                     beforeSend: function(request) {
                                         request.setRequestHeader("badge-code", workerCode);
                                     },
+                                    data: {
+                                        'is_admin': true,
+                                    },
                                     success: function (){
                                         items.value = [...items.value].filter((i) => {
                                             return i.id != id
