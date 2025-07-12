@@ -30,6 +30,7 @@
                             <tr>
                                 <th>Направление</th>
                                 <th>Код</th>
+                                <th>Online</th>
                                 <th>Столов в очереди</th>
                                 <th>Обработано сегодня</th>
                                 <th>Обработано за неделю</th>
@@ -42,6 +43,7 @@
                             <tr>
                                 <td>{{ $stat['name'] }}</td>
                                 <td>{{ $stat['code'] }}</td>
+                                <td><span class="badge badge-warning">{{ $stat['workers_online'] }}</span></td>
                                 <td><span class="badge badge-warning">{{ $stat['tables_in_queue'] }}</span></td>
                                 <td><span class="badge badge-success">{{ $stat['processed_pallets_today'] }}</span></td>
                                 <td><span class="badge badge-info">{{ $stat['processed_pallets_week'] }}</span></td>

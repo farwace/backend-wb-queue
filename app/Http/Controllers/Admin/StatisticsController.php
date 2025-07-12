@@ -7,6 +7,7 @@ use App\Models\Admin;
 use App\Models\Department;
 use App\Models\Queue;
 use App\Models\QueueLog;
+use App\Models\Table;
 use App\Models\Worker;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -43,6 +44,7 @@ class StatisticsController extends Controller
                     'processed_pallets_week' => $this->getProcessedPalletsCount($department->id, 'week'),
                     'processed_pallets_month' => $this->getProcessedPalletsCount($department->id, 'month'),
                     'tables_in_queue' => $this->getTablesInQueue($department->id),
+                    'workers_online' => $this->getWorkersOnline($department->id),
                 ];
             }
         }
@@ -90,9 +92,6 @@ class StatisticsController extends Controller
         if (!$worker) {
             return response()->json(['error' => 'Сотрудник не найден'], 404);
         }
-        if(empty($worker->table)){
-            return response()->json(['error' => 'Сотрудник не авторизован'], 422);
-        }
 
         // Get daily statistics for the last 30 days
         $dailyStats = QueueLog::where('worker_badge', $workerCode)
@@ -134,6 +133,11 @@ class StatisticsController extends Controller
         }
 
         return $query->count();
+    }
+
+    private function getWorkersOnline($departmentId)
+    {
+        return Table::whereHas('worker')->where('department_id', $departmentId)->count();
     }
 
     private function getTablesInQueue($departmentId)
