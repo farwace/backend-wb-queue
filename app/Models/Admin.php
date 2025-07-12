@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Hash;
  * @property ?string $name
  * @property string $email
  * @property Department $department
+ * @property Department[] $departments
  */
 class Admin extends Authenticatable
 {

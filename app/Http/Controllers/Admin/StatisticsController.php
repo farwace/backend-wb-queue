@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Admin;
 use App\Models\Department;
 use App\Models\Queue;
 use App\Models\QueueLog;
@@ -15,21 +16,37 @@ class StatisticsController extends Controller
 {
     public function index(Request $request)
     {
-        $departments = Department::orderBy('name')->get();
-
-        // Get statistics for all departments
-        $departmentStats = [];
-        foreach ($departments as $department) {
-            $departmentStats[] = [
-                'id' => $department->id,
-                'name' => $department->name,
-                'code' => $department->code,
-                'processed_pallets_today' => $this->getProcessedPalletsCount($department->id, 'today'),
-                'processed_pallets_week' => $this->getProcessedPalletsCount($department->id, 'week'),
-                'processed_pallets_month' => $this->getProcessedPalletsCount($department->id, 'month'),
-                'tables_in_queue' => $this->getTablesInQueue($department->id),
-            ];
+        /** @var Admin $admin */
+        $admin = backpack_user();
+        $arIds = [];
+        /** @var Department $dep */
+        foreach ($admin->departments as $dep) {
+            $arIds[] = $dep->id;
         }
+
+        $departmentStats = [];
+
+        if(count($arIds) > 0 || backpack_user()->is_root) {
+            $departmentsQuery = Department::query();
+            if(count($arIds) > 0){
+                $departmentsQuery->whereIn('id', $arIds);
+            }
+            $departments = $departmentsQuery->orderBy('name')->get();
+
+            // Get statistics for all departments
+            foreach ($departments as $department) {
+                $departmentStats[] = [
+                    'id' => $department->id,
+                    'name' => $department->name,
+                    'code' => $department->code,
+                    'processed_pallets_today' => $this->getProcessedPalletsCount($department->id, 'today'),
+                    'processed_pallets_week' => $this->getProcessedPalletsCount($department->id, 'week'),
+                    'processed_pallets_month' => $this->getProcessedPalletsCount($department->id, 'month'),
+                    'tables_in_queue' => $this->getTablesInQueue($department->id),
+                ];
+            }
+        }
+
 
         return view('admin.statistics.index', compact('departments', 'departmentStats'));
     }
@@ -72,6 +89,9 @@ class StatisticsController extends Controller
 
         if (!$worker) {
             return response()->json(['error' => 'Сотрудник не найден'], 404);
+        }
+        if(empty($worker->table)){
+            return response()->json(['error' => 'Сотрудник не авторизован'], 422);
         }
 
         // Get daily statistics for the last 30 days
