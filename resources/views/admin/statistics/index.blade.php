@@ -30,10 +30,10 @@
                             <tr>
                                 <th>Направление</th>
                                 <th>Код</th>
+                                <th>Столов в очереди</th>
                                 <th>Обработано сегодня</th>
                                 <th>Обработано за неделю</th>
                                 <th>Обработано за месяц</th>
-                                <th>Столов в очереди</th>
                                 <th>Действия</th>
                             </tr>
                         </thead>
@@ -42,10 +42,10 @@
                             <tr>
                                 <td>{{ $stat['name'] }}</td>
                                 <td>{{ $stat['code'] }}</td>
+                                <td><span class="badge badge-warning">{{ $stat['tables_in_queue'] }}</span></td>
                                 <td><span class="badge badge-success">{{ $stat['processed_pallets_today'] }}</span></td>
                                 <td><span class="badge badge-info">{{ $stat['processed_pallets_week'] }}</span></td>
                                 <td><span class="badge badge-primary">{{ $stat['processed_pallets_month'] }}</span></td>
-                                <td><span class="badge badge-warning">{{ $stat['tables_in_queue'] }}</span></td>
                                 <td>
                                     <button class="btn btn-sm btn-outline-primary" onclick="showDepartmentChart({{ $stat['id'] }}, '{{ $stat['name'] }}')">
                                         <i class="la la-chart-line"></i> График
