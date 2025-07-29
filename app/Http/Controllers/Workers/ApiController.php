@@ -390,13 +390,16 @@ class ApiController extends Controller
 
         /** @var Queue $queue */
         $queue = Queue::query()->where('table_id', $tableId)->where('worker_id', $worker->id)->where('is_closed', false)->first();
-        /** @var Queue $firstQueue */
-        $firstQueue = Queue::query()
-            ->where('color', $queue->color)
-            ->where('name', $queue->name)
-            ->where('is_closed', false)
-            ->orderBy('id', 'asc')
-            ->first();
+
+        if(!empty($queue->color)){
+            /** @var Queue $firstQueue */
+            $firstQueue = Queue::query()
+                ->where('color', $queue->color)
+                ->where('name', $queue->name)
+                ->where('is_closed', false)
+                ->orderBy('id', 'asc')
+                ->first();
+        }
 
         if(!empty($queue)){
             $queue->is_closed = true;
