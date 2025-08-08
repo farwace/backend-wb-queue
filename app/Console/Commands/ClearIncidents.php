@@ -28,7 +28,7 @@ class ClearIncidents extends Command
      */
     public function handle()
     {
-        $arIncidents = Incident::query()->where('created_at', '<=', now()->subDays(14))->limit(100)->get();
+        $arIncidents = Incident::query()->where('created_at', '<=', now()->subDays(14))->limit(200)->get();
         foreach ($arIncidents as $incident) {
             $incident->delete();
         }
