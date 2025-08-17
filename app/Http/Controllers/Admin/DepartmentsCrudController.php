@@ -78,6 +78,12 @@ class DepartmentsCrudController extends CrudController
             'type' => 'text',
             'label' => 'Количество столов в очереди',
         ]);
+        $this->crud->addColumn([
+            'name' => 'photo_required',
+            'type' => 'boolean',
+            'label' => 'Отправка фото действий',
+        ]);
+
 
 
         $this->crud->column('sort')->type('integer')->label('Сорт.');
@@ -95,6 +101,7 @@ class DepartmentsCrudController extends CrudController
             $this->crud->field('sort')->type('number')->default(500)->label('Сорт.');
             $this->crud->field('queue_length')->type('number')->default(4)->label('Количество столов в очереди');
             $this->crud->field('password')->type('text')->label('Пароль для открытия страниц');
+            $this->crud->field('photo_required')->type('boolean')->label('Отправка фото действий');
         }
     }
 

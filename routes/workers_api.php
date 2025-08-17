@@ -12,6 +12,7 @@ Route::prefix('v1.0')->group(function (){
     Route::post('/enter-queue', [ApiController::class, 'enterQueue']);
     Route::post('/receive-item', [ApiController::class, 'receiveItem']);
     Route::post('/leave-table', [ApiController::class, 'leaveTable']);
+    Route::get('/is-photo-required', [ApiController::class, 'isPhotoRequired']);
 
     //Для грузчиков
     Route::get('/queue/{direction}', [ApiController::class, 'getQueue']);

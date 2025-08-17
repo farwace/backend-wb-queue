@@ -86,6 +86,29 @@ class ApiController extends Controller
 
     }
 
+    public function isPhotoRequired(Request $request): JsonResponse
+    {
+        $badgeCode = $request->headers->get('badge-code');
+        if(empty($badgeCode) || !is_numeric($badgeCode)){
+            return $this->failure('Не удалось корректно обработать код сотрудника', 422);
+        }
+
+        $worker = Worker::query()->where('code', $badgeCode)->first();
+        if(!$worker){
+            return $this->failure('Сотрудник не найден!', 403,403);
+        }
+
+        if(empty($worker->table)){
+            return $this->failure('Отсутствует привязка сотрудника к столу', 422, 422);
+        }
+
+        if(empty($worker->table->department)){
+            return $this->failure('Отсутствует привязка сотрудника к направлению', 422, 422);
+        }
+
+        return $this->success(!!$worker->table->department->photo_required);
+    }
+
     public function leaveTable(SubmitLeaveTableRequest $request): JsonResponse
     {
         $badgeCode = $request->headers->get('badge-code');
@@ -120,11 +143,12 @@ class ApiController extends Controller
             }
         }
 
+        $photoRequired = !empty($worker->table->department->photo_required);
 
         if (empty($request->validated('is_admin'))) {
 
             $arAttachments = $request->validated('attachments');
-            if (count($arAttachments ?: []) < 1) {
+            if (count($arAttachments ?: []) < 1 && $photoRequired) {
                 return $this->failure('Прикрепите фото');
             }
             if (empty($worker->table->department->code)) {
@@ -352,9 +376,11 @@ class ApiController extends Controller
             //OrderRequested::dispatch($queue->id, true, $worker->table->code, $worker->table->name, $worker->name);
         }
 
+        $photoRequired = !empty($worker->table->department->photo_required);
+
         if (empty($request->validated('is_admin'))) {
             $arAttachments = $request->validated('attachments');
-            if (count($arAttachments ?: []) < 1) {
+            if (count($arAttachments ?: []) < 1 && $photoRequired) {
                 return $this->failure('Прикрепите фото');
             }
             if (empty($worker->table->department->code)) {

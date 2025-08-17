@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $sort
  * @property Table[] $tables
  * @property int $queue_length
+ * @property boolean $photo_required
  */
 class Department extends Model{
     use CrudTrait, LogsActivity;
