@@ -32,6 +32,7 @@
                                 <th>Код</th>
                                 <th>Online</th>
                                 <th>Столов в очереди</th>
+                                <th>~Ожидание палета</th>
                                 <th>Обработано сегодня</th>
                                 <th>Обработано за неделю</th>
                                 <th>Обработано за месяц</th>
@@ -45,6 +46,7 @@
                                 <td>{{ $stat['code'] }}</td>
                                 <td><span class="badge badge-warning">{{ $stat['workers_online'] }}</span></td>
                                 <td><span class="badge badge-warning">{{ $stat['tables_in_queue'] }}</span></td>
+                                <td><span class="badge badge-warning">{{ $stat['waiting_queue_time'] }}</span></td>
                                 <td><span class="badge badge-success">{{ $stat['processed_pallets_today'] }}</span></td>
                                 <td><span class="badge badge-info">{{ $stat['processed_pallets_week'] }}</span></td>
                                 <td><span class="badge badge-primary">{{ $stat['processed_pallets_month'] }}</span></td>

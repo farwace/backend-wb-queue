@@ -44,6 +44,7 @@ class StatisticsController extends Controller
                     'processed_pallets_week' => $this->getProcessedPalletsCount($department->id, 'week'),
                     'processed_pallets_month' => $this->getProcessedPalletsCount($department->id, 'month'),
                     'tables_in_queue' => $this->getTablesInQueue($department->id),
+                    'waiting_queue_time' => $this->getWaitingQueueTime($department->id),
                     'workers_online' => $this->getWorkersOnline($department->id),
                 ];
             }
@@ -147,6 +148,62 @@ class StatisticsController extends Controller
         })
         ->where('is_closed', false)
         ->count();
+    }
+
+    private function getWaitingQueueTime($departmentId)
+    {
+        // Получить среднее время ожидания палета за текущую смену с 8 утра до 8 вечера или с 8 вечера до 8 утра сегодня по МСК
+        // время ожидание палета - это разница между created_at и updated_at в записи, для которой is_closed = true
+
+        // Устанавливаем московскую временную зону
+        $moscowNow = Carbon::now('Europe/Moscow');
+        $currentHour = $moscowNow->hour;
+
+        // Определяем временные рамки текущей смены
+        if ($currentHour >= 8 && $currentHour < 20) {
+            // Дневная смена: с 8:00 до 20:00 сегодня
+            $shiftStart = $moscowNow->copy()->startOfDay()->addHours(8);
+            $shiftEnd = $moscowNow->copy()->startOfDay()->addHours(20);
+        } else {
+            // Ночная смена: с 20:00 вчера до 8:00 сегодня или с 20:00 сегодня до 8:00 завтра
+            if ($currentHour < 8) {
+                // Сейчас утро до 8:00 - смена началась вчера в 20:00
+                $shiftStart = $moscowNow->copy()->subDay()->startOfDay()->addHours(20);
+                $shiftEnd = $moscowNow->copy()->startOfDay()->addHours(8);
+            } else {
+                // Сейчас вечер после 20:00 - смена началась сегодня в 20:00
+                $shiftStart = $moscowNow->copy()->startOfDay()->addHours(20);
+                $shiftEnd = $moscowNow->copy()->addDay()->startOfDay()->addHours(8);
+            }
+        }
+
+        // Получаем закрытые записи очереди за текущую смену
+        $closedQueues = Queue::whereHas('table', function($query) use ($departmentId) {
+            $query->where('department_id', $departmentId);
+        })
+        ->where('is_closed', true)
+        ->where('created_at', '>=', $shiftStart)
+        ->where('created_at', '<=', $shiftEnd)
+        ->whereNotNull('updated_at')
+        ->get();
+
+        if ($closedQueues->isEmpty()) {
+            return '-';
+        }
+
+        // Вычисляем среднее время ожидания в минутах
+        $totalWaitingTimeMinutes = 0;
+        $count = 0;
+
+        foreach ($closedQueues as $queue) {
+            $waitingTime = Carbon::parse($queue->updated_at)->diffInMinutes(Carbon::parse($queue->created_at));
+            $totalWaitingTimeMinutes += $waitingTime;
+            $count++;
+        }
+
+        $averageWaitingTime = $totalWaitingTimeMinutes / $count;
+
+        return round($averageWaitingTime, 1);
     }
 
     private function getHourlyData($departmentId)
