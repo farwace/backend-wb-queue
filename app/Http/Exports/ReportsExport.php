@@ -18,20 +18,13 @@ class ReportsExport implements ISimpleCsvExporter
     {
         return [
             'id',
-            'Штрихкод',
-            'Недостача',
-            'Излишек',
-            'Через Да',
-            'Обезличка шк',
-            'ID сотрудника',
-            '№ Стола приемки',
-            'Причина обезлички',
-            'Количество',
-            'Видео',
-            'receipts', //?
-            'Тип',
             'Дата',
             'Направление',
+            'ID сотрудника',
+            'Квадрат сотрудника',
+            'Ошибка',
+            'Другая причина (текст)',
+            'Фото',
         ];
     }
 
@@ -63,20 +56,13 @@ class ReportsExport implements ISimpleCsvExporter
 
             $row = [
                 $report->id,
-                $report->barcode,
-                $report->shortage,
-                $report->surplus,
-                $report->through,
-                $report->depersonalization_barcode,
-                $report->worker,
-                $report->table,
-                $report->reason,
-                $report->count,
-                is_array($report->videos) ? implode(', ', array_map(function ($v){return env('AWS_ENDPOINT') . '/' . env('AWS_BUCKET') . '/' . $v;}, $report->videos)) : $report->videos,
-                $report->receipts,
-                $report->type,
                 Carbon::parse($report->created_at)->timezone('Europe/Moscow')->toDateTimeString(),
                 $report->department ? $report->department->name : '',
+                $report->worker,
+                $report->square,
+                $report->errorTypeLabel(),
+                $report->error_note,
+                !empty($report->error_photo) ? (env('AWS_ENDPOINT') . '/' . env('AWS_BUCKET') . '/' . $report->error_photo) : '',
             ];
 
             $data[] = $row;

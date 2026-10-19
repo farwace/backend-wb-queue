@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $name
  * @property ?string $code
  * @property int $sort
- * @property Table[] $tables
+ * @property Square[] $squares
  * @property int $queue_length
  * @property boolean $photo_required
  */
@@ -25,9 +25,9 @@ class Department extends Model{
     protected $table = 'departments';
     protected $guarded = ['id'];
 
-    public function tables():HasMany
+    public function squares():HasMany
     {
-        return $this->hasMany(Table::class, 'department_id', 'id');
+        return $this->hasMany(Square::class, 'department_id', 'id');
     }
 
     public function admins():HasMany

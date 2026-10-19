@@ -16,8 +16,9 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property ?string $name
  * @property string $code
  * @property ?int $department_id
+ * @property ?int $square_id
  * @property Department $department
- * @property ?Table $table
+ * @property ?Square $square
  */
 class Worker extends Model{
     use CrudTrait, LogsActivity;
@@ -30,8 +31,8 @@ class Worker extends Model{
         return $this->belongsTo(Department::class, 'department_id', 'id');
     }
 
-    public function table():HasOne
+    public function square():BelongsTo
     {
-        return $this->hasOne(Table::class, 'worker_id', 'id');
+        return $this->belongsTo(Square::class, 'square_id', 'id');
     }
 }

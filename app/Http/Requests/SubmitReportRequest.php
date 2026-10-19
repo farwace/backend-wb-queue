@@ -4,6 +4,7 @@
 namespace App\Http\Requests;
 
 
+use App\Models\Report;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SubmitReportRequest extends FormRequest{
@@ -14,35 +15,22 @@ class SubmitReportRequest extends FormRequest{
     public function rules(): array
     {
         return [
-            'barcode' => 'required',
-            'shortage' => 'sometimes',
-            'surplus' => 'sometimes',
-            'through' => 'sometimes',
-            'depersonalization_barcode' => 'sometimes',
-            'worker' => 'required',
-            'table' => 'required',
-            'reason' => 'sometimes',
-            'count' => 'sometimes',
-            'type' => 'sometimes',
-            'videos' => 'sometimes | array',
-            'videos.*' => 'required | file',
+            'worker' => 'required|string',
+            'square' => 'required|string',
+            'error_type' => 'required|in:' . implode(',', array_keys(Report::ERROR_TYPES)),
+            'error_note' => 'required_if:error_type,other|string',
+            'error_photo' => 'required_if:error_type,no_barcode|file|image|mimes:jpg,jpeg,png,webp|max:10240',
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'barcode' => '«ШК»',
-            'shortage' => '«Недостача»',
-            'surplus' => '«Излишек»',
-            'through' => '«Через "ДА"»',
-            'depersonalization_barcode' => '«Обезличка ШК»',
             'worker' => '«ID сотрудника»',
-            'table' => '«№ Стола Приемки»',
-            'reason' => '«Причина обезлички»',
-            'count' => '«Количество»',
-            'videos' => '«Обезличка видео»',
-            'type' => '«Тип»',
+            'square' => '«Квадрат сотрудника»',
+            'error_type' => '«Ошибка»',
+            'error_note' => '«Другая причина»',
+            'error_photo' => '«Фото»',
         ];
     }
 }

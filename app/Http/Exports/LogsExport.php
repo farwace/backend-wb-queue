@@ -20,7 +20,7 @@ class LogsExport implements ISimpleCsvExporter
             'id',
             'Бейдж сотрудника',
             'Имя сотрудника',
-            'Стол',
+            'Квадрат',
             'Статус',
             'Комментарий',
             'Дата',

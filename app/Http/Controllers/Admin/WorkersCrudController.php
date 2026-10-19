@@ -54,7 +54,7 @@ class WorkersCrudController extends CrudController
                     foreach ($backpackUser->departments as $department) {
                         $arIds[] = $department->id;
                     }
-                    $this->crud->addClause('whereHas', 'table', function ($query) use ($arIds) {
+                    $this->crud->addClause('whereHas', 'square', function ($query) use ($arIds) {
                         $query->whereHas('department', function ($query1) use ($arIds) {
                             $query1->whereIn('id', $arIds);
                         });
@@ -85,11 +85,11 @@ class WorkersCrudController extends CrudController
             }
         ]);
         $this->crud->addColumn([
-            'name' => 'table.code',
-            'label' => 'Стол',
+            'name' => 'square.code',
+            'label' => 'Квадрат',
             'type' => 'text',
             'searchLogic' => function ($query, $column, $searchTerm) {
-                $query->orWhereHas('table', function ($query) use ($column, $searchTerm) {
+                $query->orWhereHas('square', function ($query) use ($column, $searchTerm) {
                     $query->where('name', 'like', '%' . $searchTerm . '%')->orWhere('code', 'like', '%' . $searchTerm . '%');
                 });
             }
@@ -128,8 +128,8 @@ class WorkersCrudController extends CrudController
         $entry = $this->crud->getCurrentEntry();
 
         $directionCode = null;
-        if(!empty($entry->table->department->code)){
-            $directionCode = $entry->table->department->code;
+        if(!empty($entry->square?->department?->code)){
+            $directionCode = $entry->square->department->code;
         }
 
         if(!empty($directionCode)){

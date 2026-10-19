@@ -3,8 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\Department;
-use App\Models\Table;
-use App\Models\Worker;
+use App\Models\Square;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
@@ -18,7 +17,7 @@ use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
  * @package App\Http\Controllers\Admin
  * @property-read CrudPanel $crud
  */
-class TablesCrudController extends CrudController
+class SquaresCrudController extends CrudController
 {
     use ListOperation;
     use CreateOperation;
@@ -26,24 +25,13 @@ class TablesCrudController extends CrudController
     use DeleteOperation;
     use ShowOperation;
 
-    /**
-     * Configure the CrudPanel object. Apply settings to all operations.
-     *
-     * @return void
-     */
     public function setup()
     {
-        CRUD::setModel(Table::class);
-        CRUD::setRoute(config('backpack.base.route_prefix') . '/tables');
-        CRUD::setEntityNameStrings('стол', 'Столы');
+        CRUD::setModel(Square::class);
+        CRUD::setRoute(config('backpack.base.route_prefix') . '/squares');
+        CRUD::setEntityNameStrings('квадрат', 'Квадраты');
     }
 
-    /**
-     * Define what happens when the List operation is loaded.
-     *
-     * @see  https://backpackforlaravel.com/docs/crud-operation-list-entries
-     * @return void
-     */
     protected function setupListOperation()
     {
 
@@ -64,7 +52,7 @@ class TablesCrudController extends CrudController
         $this->crud->addColumn([
             'name' => 'name',
             'type' => 'text',
-            'label' => 'Название',
+            'label' => 'Номер/Название',
         ]);
         $this->crud->addColumn([
             'name' => 'code',
@@ -72,31 +60,15 @@ class TablesCrudController extends CrudController
             'label' => 'Код',
         ]);
         $this->crud->addColumn([
-            'name' => 'worker_id',
-            'type' => 'number',
-            'label' => 'w_id',
-            'orderable' => true,
-        ]);
-
-        $this->crud->addColumn([
-            'name' => 'worker.name',
+            'name' => 'max_workers',
             'type' => 'text',
-            'label' => 'Занят',
-            'searchLogic' => function ($query, $column, $searchTerm) {
-                $query->orWhereHas('worker', function ($query) use ($column, $searchTerm) {
-                    $query->where('name', 'like', '%' . $searchTerm . '%');
-                });
-            }
+            'label' => 'Вместимость',
         ]);
         $this->crud->addColumn([
-            'name' => 'worker.code',
-            'type' => 'text',
-            'label' => 'Занят',
-            'searchLogic' => function ($query, $column, $searchTerm) {
-                $query->orWhereHas('worker', function ($query) use ($column, $searchTerm) {
-                    $query->where('code', 'like', '%' . $searchTerm . '%');
-                });
-            }
+            'name' => 'workers_count',
+            'type' => 'count',
+            'label' => 'Сотрудников сейчас',
+            'entity' => 'workers',
         ]);
 
         $this->crud->addColumn([
@@ -110,6 +82,7 @@ class TablesCrudController extends CrudController
             }
         ]);
 
+        $this->crud->orderBy('department_id', 'asc')->orderBy('code', 'asc');
     }
 
     protected function setupShowOperation()
@@ -118,8 +91,15 @@ class TablesCrudController extends CrudController
     }
 
     protected function setupCreateOperation(){
-        $this->crud->field('name')->type('text')->label('Название')->attributes(['required' => 'true']);
+        $this->crud->field('name')->type('text')->label('Номер/Название')->attributes(['required' => 'true']);
         $this->crud->field('code')->type('text')->attributes(['required'=>'true'])->label('Код');
+        $this->crud->addField([
+            'name' => 'max_workers',
+            'type' => 'number',
+            'label' => 'Вместимость (макс. сотрудников)',
+            'default' => 10,
+            'attributes' => ['min' => 1],
+        ]);
         $this->crud->addField([
             'name' => 'department_id',
             'label' => 'Направление',
@@ -128,23 +108,8 @@ class TablesCrudController extends CrudController
             'attribute' => 'name',
             'model' => Department::class,
         ]);
-        $this->crud->addField([
-            'name' => 'worker_id',
-            'label' => 'Сотрудник',
-            'type' => 'select',
-            'entity' => 'worker',
-            'attribute' => 'name',
-            'model' => Worker::class,
-        ]);
-
     }
 
-    /**
-     * Define what happens when the Update operation is loaded.
-     *
-     * @see https://backpackforlaravel.com/docs/crud-operation-update
-     * @return void
-     */
     protected function setupUpdateOperation()
     {
         $this->setupCreateOperation();

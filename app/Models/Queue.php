@@ -17,9 +17,9 @@ use function Psy\debug;
  * @property \DateTime $updated_at
  * @property boolean $is_closed
  * @property int $worker_id
- * @property int $table_id
+ * @property int $square_id
  * @property Worker $worker
- * @property Table $table
+ * @property Square $square
  * @property string $color
  * @property ?string $name
  */
@@ -32,7 +32,8 @@ class Queue extends Model{
     protected static function booted()
     {
         static::updated(function ($queue) {
-            event(new OrderRequested($queue->getAttribute('table')->department_id,$queue->getAttribute('table')->id, $queue->is_closed, $queue->getAttribute('table')->code, $queue->getAttribute('table')->name, $queue->worker->name, $queue->updated_at, $queue->color, $queue->name ));
+            $square = $queue->getAttribute('square');
+            event(new OrderRequested($square?->department?->code ?? (string)$square?->department_id, $queue->id, $queue->is_closed, $square?->code, $square?->name, $queue->worker?->name ?? '', $queue->updated_at, $queue->color, $queue->name ));
         });
 
     }
@@ -42,9 +43,9 @@ class Queue extends Model{
         return $this->belongsTo(Worker::class, 'worker_id', 'id');
     }
 
-    public function table(): BelongsTo
+    public function square(): BelongsTo
     {
-        return $this->belongsTo(Table::class, 'table_id', 'id');
+        return $this->belongsTo(Square::class, 'square_id', 'id');
     }
 
     public function getCreatedAtForBackpack()

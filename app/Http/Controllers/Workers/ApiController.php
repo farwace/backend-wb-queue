@@ -13,7 +13,7 @@ use App\Models\Incident;
 use App\Models\LoadersSettings;
 use App\Models\Queue;
 use App\Models\QueueLog;
-use App\Models\Table;
+use App\Models\Square;
 use App\Models\Worker;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -98,15 +98,15 @@ class ApiController extends Controller
             return $this->failure('Сотрудник не найден!', 403,403);
         }
 
-        if(empty($worker->table)){
-            return $this->failure('Отсутствует привязка сотрудника к столу', 422, 422);
+        if(empty($worker->square)){
+            return $this->failure('Отсутствует привязка сотрудника к квадрату', 422, 422);
         }
 
-        if(empty($worker->table->department)){
+        if(empty($worker->square->department)){
             return $this->failure('Отсутствует привязка сотрудника к направлению', 422, 422);
         }
 
-        return $this->success(!!$worker->table->department->photo_required);
+        return $this->success(!!$worker->square->department->photo_required);
     }
 
     public function leaveTable(SubmitLeaveTableRequest $request): JsonResponse
@@ -120,30 +120,26 @@ class ApiController extends Controller
             return $this->failure('Сотрудник не найден!', 403,403);
         }
 
-        if(!empty($worker->table)){
-            $queue = Queue::query()->where('table_id', $worker->table->id)->where('worker_id', $worker->id)->where('is_closed', false)->first();
+        $square = $worker->square;
+        $squareName = !empty($square) ? ($square->name ?: ($square->code ?: '')) : '';
+        $departmentId = !empty($square) ? ($square->department_id ?: $worker->department_id) : $worker->department_id;
+
+        if(!empty($square)){
+            $queue = Queue::query()->where('square_id', $square->id)->where('worker_id', $worker->id)->where('is_closed', false)->first();
             if(!empty($queue)){
-                $logData = [
-                    'badge' => $worker->code,
-                    'name' => $worker->name,
-                    'tableName' => !empty($worker->table->name) ? $worker->table->name : '',
-                    'department_id' => !empty($worker->table->department_id) ? $worker->table->department_id : $worker->department_id,
-                    'status' => 'warning_logout',
-                    'message' => 'Попытался выйти из аккаунта во время ожидания палета!'
-                ];
                 $queueLog = new QueueLog();
-                $queueLog->worker_badge = $logData['badge'];
-                $queueLog->worker_name = $logData['name'];
-                $queueLog->table = $logData['tableName'];
-                $queueLog->department_id = $logData['department_id'];
-                $queueLog->status = $logData['status'];
-                $queueLog->message = $logData['message'];
+                $queueLog->worker_badge = $worker->code;
+                $queueLog->worker_name = $worker->name;
+                $queueLog->table = $squareName;
+                $queueLog->department_id = $departmentId;
+                $queueLog->status = 'warning_logout';
+                $queueLog->message = 'Попытался выйти из аккаунта во время ожидания палета!';
                 $queueLog->save();
                 return $this->failure('Замечена подозрительная активность! При повторе информация будет отправлена старшему!');
             }
         }
 
-        $photoRequired = !empty($worker->table->department->photo_required);
+        $photoRequired = !empty($square?->department?->photo_required);
 
         if (empty($request->validated('is_admin'))) {
 
@@ -151,16 +147,15 @@ class ApiController extends Controller
             if (count($arAttachments ?: []) < 1 && $photoRequired) {
                 return $this->failure('Прикрепите фото');
             }
-            if (empty($worker->table->department->code)) {
+            if (empty($square?->department?->code)) {
                 return $this->failure('Утерена привязка к направлению - обратитесь к старшему');
             }
-
 
             $arPath = [];
             if (!empty($arAttachments)) {
                 /** @var UploadedFile $file */
                 foreach ($arAttachments as $file) {
-                    $path = $file->store('incidents/' . $worker->table->department->code . '/' . now()->format('Y-m-d'), 's3');
+                    $path = $file->store('incidents/' . $square->department->code . '/' . now()->format('Y-m-d'), 's3');
                     $arPath[] = $path;
                 }
             }
@@ -169,59 +164,51 @@ class ApiController extends Controller
             $incident->attachments = $arPath;
             $incident->type = 'Выход';
             $incident->message = '';
-            $incident->department_id = $worker->table->department_id;
+            $incident->department_id = $square->department_id;
             $incident->worker_name = $worker->name ?: '';
             $incident->worker_code = $badgeCode;
             $incident->save();
         }
 
-        $logData = [
-            'badge' => $worker->code,
-            'name' => $worker->name,
-            'tableName' => !empty($worker->table->name) ? $worker->table->name : '',
-            'department_id' => !empty($worker->table->department_id) ? $worker->table->department_id : $worker->department_id,
-            'status' => 'logout',
-            'message' => 'Вышел из аккаунта'
-        ];
-        $worker->department_id = null;
-        $worker->save();
-        $table = Table::query()->where('worker_id', $worker->id)->first();
-        if(!empty($table)){
-            $queue = Queue::query()->where('table_id', $table->id)->where('worker_id', $worker->id)->where('is_closed', false)->first();
+        if(!empty($square)){
+            $queue = Queue::query()->where('square_id', $square->id)->where('worker_id', $worker->id)->where('is_closed', false)->first();
             $arItems = Cache::get('checkTables', []);
-            $arItems[$table->id] = [
-                'id' => $table->id,
-                'name' => $table->name,
-                'code' => $table->code,
+            $arItems[$worker->id] = [
+                'id' => $worker->id,
+                'squareId' => $square->id,
+                'name' => $square->name,
+                'code' => $square->code,
                 'workerName' => $worker->name,
                 'workerCode' => $worker->code,
                 'timestamp' => Carbon::now(),
-                'departmentId' => $table->department_id,
+                'departmentId' => $square->department_id,
             ];
 
             Cache::put('checkTables', $arItems, 1800);
 
             if($queue){
-                event(new OrderRequested($worker->table->department->code, $worker->table->id, true, $worker->table->code, $worker->table->name, $worker->name, $queue->updated_at, $queue->color, $queue->name));
+                event(new OrderRequested($square->department->code, $queue->id, true, $square->code, $square->name, $worker->name, $queue->updated_at, $queue->color, $queue->name));
                 $queue->is_closed = true;
                 $queue->save();
             }
-            $table->worker_id = null;
-            $table->save();
         }
 
+        $worker->square_id = null;
+        $worker->department_id = null;
+        $worker->save();
+
         $queueLog = new QueueLog();
-        $queueLog->worker_badge = $logData['badge'];
-        $queueLog->worker_name = $logData['name'];
-        $queueLog->table = $logData['tableName'];
-        $queueLog->department_id = $logData['department_id'];
-        $queueLog->status = $logData['status'];
-        $queueLog->message = $logData['message'];
+        $queueLog->worker_badge = $worker->code;
+        $queueLog->worker_name = $worker->name;
+        $queueLog->table = $squareName;
+        $queueLog->department_id = $departmentId;
+        $queueLog->status = 'logout';
+        $queueLog->message = 'Вышел из аккаунта';
         $queueLog->save();
 
         return $this->success([], 'Success');
     }
-    public function selectTable(Request $request): JsonResponse
+    public function selectSquare(Request $request): JsonResponse
     {
         $arRequest = $request->toArray();
         $direction = $arRequest['direction'];
@@ -236,28 +223,45 @@ class ApiController extends Controller
             return $this->failure('Сотрудник не найден!', 403,403);
         }
 
-        if(empty($arRequest['table_id'])){
-            return $this->failure('Ошибка получения номера стола!', 422);
+        if(empty($arRequest['square_id'])){
+            return $this->failure('Ошибка получения номера квадрата!', 422);
         }
 
-        $table = Table::query()->where('id', $arRequest['table_id'])->first();
-        if($table && empty($table->worker_id)){
-            $table->worker_id = $worker->id;
-            $table->save();
+        $squareId = (int)$arRequest['square_id'];
 
-            $queueLog = new QueueLog();
-            $queueLog->worker_badge = $worker->code;
-            $queueLog->worker_name = $worker->name;
-            $queueLog->table = $table->name;
-            $queueLog->department_id = $table->department_id;
-            $queueLog->status = 'login';
-            $queueLog->message = 'Занял стол';
-            $queueLog->save();
+        // Атомарная проверка вместимости: блокируем строку квадрата, чтобы сериализовать параллельный выбор
+        $result = DB::transaction(function () use ($worker, $squareId) {
+            /** @var ?Square $square */
+            $square = Square::query()->where('id', $squareId)->lockForUpdate()->first();
+            if(!$square){
+                return ['ok' => false, 'msg' => 'Не удалось забронировать квадрат! Обновите страницу и попробуйте еще раз'];
+            }
+            $occupied = Worker::query()->where('square_id', $square->id)->where('id', '!=', $worker->id)->count();
+            if($occupied >= (int)$square->max_workers){
+                return ['ok' => false, 'msg' => 'В этом квадрате нет свободных мест! Выберите другой квадрат'];
+            }
+            $worker->square_id = $square->id;
+            $worker->save();
+            return ['ok' => true];
+        });
 
-            return $this->success($this->workerInfo($worker), 'Success');
+        if(!$result['ok']){
+            return $this->failure($result['msg'], 422);
         }
 
-        return $this->failure('Не удалось забронировать стол! Обновите страницу и попробуйте еще раз', 422);
+        /** @var Square $square */
+        $square = Square::query()->find($squareId);
+
+        $queueLog = new QueueLog();
+        $queueLog->worker_badge = $worker->code;
+        $queueLog->worker_name = $worker->name;
+        $queueLog->table = $square->name ?: $square->code;
+        $queueLog->department_id = $square->department_id;
+        $queueLog->status = 'login';
+        $queueLog->message = 'Занял квадрат';
+        $queueLog->save();
+
+        return $this->success($this->workerInfo($worker), 'Success');
     }
 
 
@@ -277,16 +281,16 @@ class ApiController extends Controller
             return $this->failure('Сотрудник не найден!', 403, 403);
         }
 
-        if(empty($worker->table->id)){
+        if(empty($worker->square->id)){
             return $this->failure('Ошибка авторизации! Обновите страницу', 422);
         }
-        $tableId = $worker->table->id;
+        $squareId = $worker->square->id;
 
-        if(empty($worker->table->department->code)){
+        if(empty($worker->square->department->code)){
             return $this->failure('Утеряно направление (Ссылка: '. $direction .'), Обратитесь к старшему!', 422);
         }
-        if($worker->table->department->code !== $direction){
-            return $this->failure('Ошибка направления (Ссылка: '. $direction .', в системе: ' . $worker->table->department->code . ' ), Обратитесь к старшему!', 422);
+        if($worker->square->department->code !== $direction){
+            return $this->failure('Ошибка направления (Ссылка: '. $direction .', в системе: ' . $worker->square->department->code . ' ), Обратитесь к старшему!', 422);
         }
 
         $arWorkerInfo = $this->workerInfo($worker);
@@ -295,12 +299,12 @@ class ApiController extends Controller
         }
         $loaderSettings = LoadersSettings::query()
             ->where('active', true)
-            ->where('department_id', $worker->table->department_id)
+            ->where('department_id', $worker->square->department_id)
             ->orderBy('id', 'asc')
             ->get()
             ->toArray();
 
-        $lastKey = (int)Cache::get('loaderIndex-' . $worker->table->department_id, 0);
+        $lastKey = (int)Cache::get('loaderIndex-' . $worker->square->department_id, 0);
         if(!$loaderSettings){
             $loaderSettings = [
                 [
@@ -313,26 +317,25 @@ class ApiController extends Controller
         if($lastKey >= (count($loaderSettings))){
             $lastKey = 0;
         }
-        Cache::put('loaderIndex-' . $worker->table->department_id, $lastKey);
+        Cache::put('loaderIndex-' . $worker->square->department_id, $lastKey);
         $queue = new Queue();
         if(!empty($loaderSettings[$lastKey])){
             $queue->color = $loaderSettings[$lastKey]['color'];
             $queue->name = $loaderSettings[$lastKey]['name'];
         }
-        $queue->table_id = $tableId;
+        $queue->square_id = $squareId;
         $queue->worker_id = $worker->id;
         $queue->is_closed = false;
         $queue->save();
 
         $arWorkerInfo['inQueue'] = true;
 
-        event(new OrderRequested($worker->table->department->code, $worker->table->id, false, $worker->table->code, $worker->table->name, $worker->name, $queue->updated_at, $queue->color, $queue->name));
-        //OrderRequested::dispatch($queue->id, false, $worker->table->code, $worker->table->name, $worker->name);
+        event(new OrderRequested($worker->square->department->code, $queue->id, false, $worker->square->code, $worker->square->name, $worker->name, $queue->updated_at, $queue->color, $queue->name));
         $queueLog = new QueueLog();
         $queueLog->worker_badge = $worker->code;
         $queueLog->worker_name = $worker->name;
-        $queueLog->table = $worker->table->name;
-        $queueLog->department_id = $worker->table->department_id;
+        $queueLog->table = $worker->square->name ?: $worker->square->code;
+        $queueLog->department_id = $worker->square->department_id;
         $queueLog->status = 'success';
         $queueLog->message = 'Заказал товар!';
         $queueLog->save();
@@ -352,20 +355,20 @@ class ApiController extends Controller
             return $this->failure('Сотрудник не найден!', 403,403);
         }
 
-        if(empty($worker->table->id)){
+        if(empty($worker->square->id)){
             return $this->failure('Ошибка авторизации! Обновите страницу', 422);
         }
-        $tableId = $worker->table->id;
+        $squareId = $worker->square->id;
 
-        $queue = Queue::query()->where('table_id', $tableId)->where('worker_id', $worker->id)->where('is_closed', false)->orderBy('id', 'desc')->first();
+        $queue = Queue::query()->where('square_id', $squareId)->where('worker_id', $worker->id)->where('is_closed', false)->orderBy('id', 'desc')->first();
 
         if($queue){
             if(abs(Carbon::now()->diffInSeconds($queue->created_at)) < 55){
                 $queueLog = new QueueLog();
                 $queueLog->worker_badge = $worker->code;
                 $queueLog->worker_name = $worker->name;
-                $queueLog->table = $worker->table->name;
-                $queueLog->department_id = $worker->table->department_id;
+                $queueLog->table = $worker->square->name ?: $worker->square->code;
+                $queueLog->department_id = $worker->square->department_id;
                 $queueLog->status = 'error';
                 $queueLog->message = 'Нажал получить товар слишком быстро (' . abs(Carbon::now()->diffInSeconds($queue->created_at)) . ' сек)!';
                 $queueLog->save();
@@ -373,17 +376,16 @@ class ApiController extends Controller
                 return $this->failure('Замечена подозрительная активность! При повторе информация будет отправлена старшему!', 422);
             }
 
-            //OrderRequested::dispatch($queue->id, true, $worker->table->code, $worker->table->name, $worker->name);
         }
 
-        $photoRequired = !empty($worker->table->department->photo_required);
+        $photoRequired = !empty($worker->square->department->photo_required);
 
         if (empty($request->validated('is_admin'))) {
             $arAttachments = $request->validated('attachments');
             if (count($arAttachments ?: []) < 1 && $photoRequired) {
                 return $this->failure('Прикрепите фото');
             }
-            if (empty($worker->table->department->code)) {
+            if (empty($worker->square->department->code)) {
                 return $this->failure('Утерена привязка к направлению - обратитесь к старшему');
             }
             $msg = $request->validated('message');
@@ -395,7 +397,7 @@ class ApiController extends Controller
             if (!empty($arAttachments)) {
                 /** @var UploadedFile $file */
                 foreach ($arAttachments as $file) {
-                    $path = $file->store('incidents/' . $worker->table->department->code . '/' . now()->format('Y-m-d'), 's3');
+                    $path = $file->store('incidents/' . $worker->square->department->code . '/' . now()->format('Y-m-d'), 's3');
                     $arPath[] = $path;
                 }
             }
@@ -404,18 +406,18 @@ class ApiController extends Controller
             $incident->attachments = $arPath;
             $incident->type = 'Товар получен';
             $incident->message = $msg ?: '';
-            $incident->department_id = $worker->table->department_id;
+            $incident->department_id = $worker->square->department_id;
             $incident->worker_name = $worker->name ?: '';
             $incident->worker_code = $badgeCode;
             $incident->save();
         }
 
         if($queue){
-            event(new OrderRequested($worker->table->department->code, $worker->table->id, true, $worker->table->code, $worker->table->name, $worker->name, $queue->updated_at));
+            event(new OrderRequested($worker->square->department->code, $queue->id, true, $worker->square->code, $worker->square->name, $worker->name, $queue->updated_at));
         }
 
         /** @var Queue $queue */
-        $queue = Queue::query()->where('table_id', $tableId)->where('worker_id', $worker->id)->where('is_closed', false)->first();
+        $queue = Queue::query()->where('square_id', $squareId)->where('worker_id', $worker->id)->where('is_closed', false)->first();
 
         if(!empty($queue->color)){
             /** @var Queue $firstQueue */
@@ -451,8 +453,8 @@ class ApiController extends Controller
         $queueLog = new QueueLog();
         $queueLog->worker_badge = $worker->code;
         $queueLog->worker_name = $worker->name;
-        $queueLog->table = $worker->table->name;
-        $queueLog->department_id = $worker->table->department_id;
+        $queueLog->table = $worker->square->name ?: $worker->square->code;
+        $queueLog->department_id = $worker->square->department_id;
         $queueLog->status = $status;
         $queueLog->message = $message;
         $queueLog->save();
@@ -474,7 +476,7 @@ class ApiController extends Controller
         }
 
         $queue = Queue::query()->where('is_closed', false)
-            ->whereHas('table.department', function ($query) use ($direction) {
+            ->whereHas('square.department', function ($query) use ($direction) {
                 $query->where('code', $direction);
             })
             ->orderBy('id', 'asc')->get();
@@ -485,22 +487,22 @@ class ApiController extends Controller
     {
         $fiveHoursAgo = Carbon::now()->subHours(5);
 
-        // Подзапрос: последние закрытые записи по (worker_id, table_id)
+        // Подзапрос: последние закрытые записи по (worker_id, square_id)
         $subQuery = Queue::select(DB::raw('MAX(id) as id'))
             ->where('is_closed', true)
             ->where('created_at', '>=', $fiveHoursAgo)
-            ->groupBy('worker_id', 'table_id');
+            ->groupBy('worker_id', 'square_id');
 
         // Вытащим записи с этими ID
         $lastClosedQueues = Queue::whereIn('id', $subQuery)
-            ->with(['worker', 'table', 'table.department']) // подгружаем связи
+            ->with(['worker', 'square', 'square.department']) // подгружаем связи
             ->get();
 
         // Фильтруем:
         $filtered = $lastClosedQueues->filter(function ($queue) {
             // Исключаем, если есть более новая открытая запись
             $hasNewOpen = Queue::where('worker_id', $queue->worker_id)
-                ->where('table_id', $queue->table_id)
+                ->where('square_id', $queue->square_id)
                 ->where('id', '>', $queue->id)
                 ->where('is_closed', false)
                 ->exists();
@@ -509,9 +511,8 @@ class ApiController extends Controller
                 return false;
             }
 
-            // И дополнительно проверяем соответствие связанной таблицы
-            $table = $queue->table;
-            return $table && $table->worker_id === $queue->worker_id;
+            // Сотрудник всё ещё привязан к этому квадрату
+            return $queue->worker && $queue->worker->square_id === $queue->square_id;
         })->values();
 
         return response()->json(['in_progress' => $filtered, 'closed' => array_values(Cache::get('checkTables', []))]);
@@ -520,11 +521,12 @@ class ApiController extends Controller
     public function setTableChecked(Request $request): JsonResponse
     {
         $arRequest = $request->toArray();
-        if(!empty($arRequest['table_id'])){
-            $arTables = Cache::get('checkTables', []);
-            if(!empty($arTables[$arRequest['table_id']])){
-                unset($arTables[$arRequest['table_id']]);
-                Cache::put('checkTables', $arTables);
+        $workerId = $arRequest['worker_id'] ?? $arRequest['table_id'] ?? null;
+        if(!empty($workerId)){
+            $arItems = Cache::get('checkTables', []);
+            if(!empty($arItems[$workerId])){
+                unset($arItems[$workerId]);
+                Cache::put('checkTables', $arItems);
             }
             return $this->success([]);
         }
@@ -560,36 +562,51 @@ class ApiController extends Controller
         return $cnt;
     }
 
-    public function getTables(int $departmentId)
+    public function getSquares(int $departmentId)
     {
-        return Table::query()
-            ->whereNull('worker_id')
+        return Square::query()
+            ->withCount('workers')
             ->where('department_id', $departmentId)
             ->orderBy('code', 'asc')
             ->get()
+            ->map(function ($s){
+                $max = (int)$s->max_workers;
+                $occupied = (int)$s->workers_count;
+                return [
+                    'id' => $s->id,
+                    'name' => $s->name,
+                    'code' => $s->code,
+                    'max_workers' => $max,
+                    'occupied' => $occupied,
+                    'free' => max(0, $max - $occupied),
+                ];
+            })
+            ->filter(function ($s){ return $s['free'] > 0; })
+            ->values()
             ->toArray();
     }
 
     public function workerInfo($worker): array
     {
-        $table = $worker->table;
+        $square = $worker->square;
         $inQueue = false;
-        if(!empty($table)){
-            $tableName = $table->name ?: $table->code;
+        $squareName = null;
+        if(!empty($square)){
+            $squareName = $square->name ?: $square->code;
 
-            $queue = Queue::query()->where('table_id', $table->id)->where('worker_id', $worker->id)->where('is_closed', false)->orderBy('id', 'desc')->first();
+            $queue = Queue::query()->where('square_id', $square->id)->where('worker_id', $worker->id)->where('is_closed', false)->orderBy('id', 'desc')->first();
             if($queue){
                 $inQueue = true;
             }
-            $departmentId = $table->department_id;
+            $departmentId = $square->department_id;
         }
         if(empty($departmentId)){
             $departmentId = $worker->department_id ?: 0;
         }
 
-        $arResult = array_merge($worker->toArray(), ['tables' => $this->getTables($departmentId), 'inQueue' => $inQueue]);
-        if(!empty($tableName)){
-            $arResult = array_merge($arResult, ['table' => $tableName]);
+        $arResult = array_merge($worker->toArray(), ['squares' => $this->getSquares($departmentId), 'inQueue' => $inQueue]);
+        if(!empty($squareName)){
+            $arResult = array_merge($arResult, ['square' => $squareName]);
         }
 
         return $arResult;

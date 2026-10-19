@@ -7,7 +7,7 @@ use App\Models\Admin;
 use App\Models\Department;
 use App\Models\Queue;
 use App\Models\QueueLog;
-use App\Models\Table;
+use App\Models\Square;
 use App\Models\Worker;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -138,12 +138,16 @@ class StatisticsController extends Controller
 
     private function getWorkersOnline($departmentId)
     {
-        return Table::whereHas('worker')->where('department_id', $departmentId)->count();
+        return Worker::query()->whereNotNull('square_id')
+            ->whereHas('square', function ($q) use ($departmentId) {
+                $q->where('department_id', $departmentId);
+            })
+            ->count();
     }
 
     private function getTablesInQueue($departmentId)
     {
-        return Queue::whereHas('table', function($query) use ($departmentId) {
+        return Queue::whereHas('square', function($query) use ($departmentId) {
             $query->where('department_id', $departmentId);
         })
         ->where('is_closed', false)
@@ -178,7 +182,7 @@ class StatisticsController extends Controller
         }
 
         // Получаем закрытые записи очереди за текущую смену
-        $closedQueues = Queue::whereHas('table', function($query) use ($departmentId) {
+        $closedQueues = Queue::whereHas('square', function($query) use ($departmentId) {
             $query->where('department_id', $departmentId);
         })
         ->where('is_closed', true)

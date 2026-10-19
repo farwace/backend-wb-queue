@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Models\Queue;
 use App\Models\QueueLog;
-use App\Models\Table;
 use App\Models\Worker;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
@@ -16,14 +15,14 @@ class ClearTablesAndWorkers extends Command
      *
      * @var string
      */
-    protected $signature = 'tables:clear';
+    protected $signature = 'squares:clear';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Освободить столы и почистить сотрудников';
+    protected $description = 'Освободить квадраты и почистить сотрудников';
 
     /**
      * Execute the console command.
@@ -32,7 +31,7 @@ class ClearTablesAndWorkers extends Command
     {
         Queue::query()->where('is_closed', false)->update(['is_closed' => true]);
 
-        Table::query()->whereNotNull('worker_id')->update(['worker_id' => null]);
+        Worker::query()->update(['square_id' => null]);
         Worker::query()->delete();
         Cache::put('checkTables', []);
     }

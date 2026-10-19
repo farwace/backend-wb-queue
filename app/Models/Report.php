@@ -5,31 +5,33 @@ namespace App\Models;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Сотрудник приемки
+ * Отписка (ошибка при приемке)
  * @property int $id
  * @property \DateTime $created_at
  * @property \DateTime $updated_at
  * @property Department $department
  * @property ?int $department_id
- * @property ?string $barcode
- * @property ?string $shortage
- * @property ?string $surplus
- * @property ?string $through
- * @property ?string $depersonalization_barcode
- * @property ?string $worker
- * @property ?string $table
- * @property ?string $reason
- * @property ?string $count
- * @property ?array $videos
- * @property ?string $receipts
- * @property ?string $type
+ * @property ?string $worker         ID сотрудника
+ * @property ?string $square         квадрат сотрудника
+ * @property ?string $error_type     not_in_order|office_error|no_barcode|other
+ * @property ?string $error_note     текст для «другая причина»
+ * @property ?string $error_photo    путь к фото для «Нет ШК»
  */
 class Report extends Model{
     use CrudTrait;
+
+    /**
+     * Возможные типы ошибки: значение => отображаемая подпись.
+     */
+    public const ERROR_TYPES = [
+        'not_in_order' => 'Товар не в заказе',
+        'office_error' => 'Ошибка офиса',
+        'no_barcode'   => 'Нет ШК',
+        'other'        => 'Другая причина',
+    ];
 
     protected $table = 'reports';
     protected $guarded = ['id'];
@@ -37,12 +39,8 @@ class Report extends Model{
     protected static function booted()
     {
         static::deleting(function (Report $report) {
-            if(!empty($report->videos && is_array($report->videos))){
-                foreach ($report->videos as $filePath) {
-                    if ($filePath && Storage::disk('s3')->exists($filePath)) {
-                        Storage::disk('s3')->delete($filePath);
-                    }
-                }
+            if(!empty($report->error_photo) && Storage::disk('s3')->exists($report->error_photo)){
+                Storage::disk('s3')->delete($report->error_photo);
             }
         });
     }
@@ -52,12 +50,12 @@ class Report extends Model{
         return $this->belongsTo(Department::class, 'department_id', 'id');
     }
 
-    protected function videos(): Attribute
+    /**
+     * Человекочитаемая подпись выбранного типа ошибки.
+     */
+    public function errorTypeLabel(): string
     {
-        return Attribute::make(
-            get: fn ($value) => !empty($value) ? json_decode($value, true) : '',
-            set: fn ($value) => json_encode(!empty($value) ? $value : []),
-        );
+        return self::ERROR_TYPES[$this->error_type] ?? (string)$this->error_type;
     }
 
     public function exportButtonContent()
@@ -65,5 +63,18 @@ class Report extends Model{
         return '<a href="/admin/reports-export" target="_blank" class="btn btn-primary" data-style="zoom-in">
                     <i class="la la-file-csv"></i> <span>Экспорт</span>
                 </a>';
+    }
+
+    /**
+     * Колонка списка: миниатюра фото ошибки (если загружено).
+     */
+    public function errorPhotoHtml(): string
+    {
+        if(empty($this->error_photo)){
+            return '';
+        }
+        $url = Storage::disk('s3')->url($this->error_photo);
+        $safe = e($url);
+        return '<a href="' . $safe . '" target="_blank"><img src="' . $safe . '" height="40" style="border-radius:4px;" alt="фото"></a>';
     }
 }

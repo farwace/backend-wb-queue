@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\Department;
 use App\Models\Report;
-use App\Models\Table;
 use App\Models\Worker;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
@@ -49,12 +48,6 @@ class ReportsCrudController extends CrudController
     protected function setupListOperation()
     {
         $this->crud->addButton('top', 'export', 'model_function', 'exportButtonContent');
-        $backpackUser = backpack_user();
-        if(!empty($backpackUser)){
-            if(!$backpackUser->is_root){
-
-            }
-        }
 
         $this->crud->column('id')->type('number')->label('#ID');
 
@@ -79,59 +72,34 @@ class ReportsCrudController extends CrudController
         ]);
 
         $this->crud->addColumn([
-            'name' => 'barcode',
-            'type' => 'text',
-            'label' => 'ШК',
-        ]);
-        $this->crud->addColumn([
-            'name' => 'type',
-            'type' => 'text',
-            'label' => 'Тип',
-        ]);
-
-        $this->crud->addColumn([
-            'name' => 'shortage',
-            'type' => 'text',
-            'label' => 'Недостача',
-        ]);
-        $this->crud->addColumn([
-            'name' => 'surplus',
-            'type' => 'text',
-            'label' => 'Излишек',
-        ]);
-        $this->crud->addColumn([
-            'name' => 'through',
-            'type' => 'text',
-            'label' => 'Через "ДА"',
-        ]);
-
-        $this->crud->addColumn([
             'name' => 'worker',
             'type' => 'text',
-            'label' => 'ID сотрудника»',
+            'label' => 'ID сотрудника',
         ]);
         $this->crud->addColumn([
-            'name' => 'table',
+            'name' => 'square',
             'type' => 'text',
-            'label' => '№ Стола Приемки',
+            'label' => 'Квадрат сотрудника',
         ]);
         $this->crud->addColumn([
-            'name' => 'reason',
+            'name' => 'error_type',
+            'type' => 'closure',
+            'label' => 'Ошибка',
+            'function' => function ($entry) {
+                return e($entry->errorTypeLabel());
+            }
+        ]);
+        $this->crud->addColumn([
+            'name' => 'error_note',
             'type' => 'text',
-            'label' => 'Причина обезлички',
+            'label' => 'Другая причина (текст)',
         ]);
         $this->crud->addColumn([
-            'name' => 'count',
-            'type' => 'text',
-            'label' => 'Количество',
+            'name' => 'error_photo',
+            'type' => 'model_function',
+            'label' => 'Фото',
+            'function_name' => 'errorPhotoHtml',
         ]);
-        $this->crud->addColumn([
-            'name' => 'videos',
-            'type' => 'view',
-            'label' => 'Обезличка видео',
-            'view' => 'admin/columns/report-video'
-        ]);
-
     }
 
     protected function setupShowOperation()
@@ -140,51 +108,84 @@ class ReportsCrudController extends CrudController
     }
 
     protected function setupCreateOperation(){
-        $this->crud->addField([
-            'name' => 'barcode',
-            'type' => 'text',
-            'label' => 'ШК',
-        ]);
-        $this->crud->addField([
-            'name' => 'type',
-            'type' => 'text',
-            'label' => 'Тип',
-        ]);
-        $this->crud->addField([
-            'name' => 'shortage',
-            'type' => 'text',
-            'label' => 'Недостача',
-        ]);
-        $this->crud->addField([
-            'name' => 'surplus',
-            'type' => 'text',
-            'label' => 'Излишек',
-        ]);
-        $this->crud->addField([
-            'name' => 'through',
-            'type' => 'text',
-            'label' => 'Через "ДА"',
+        $this->crud->setValidationFromArray([
+            'worker' => 'required|string',
+            'square' => 'required|string',
+            'error_type' => 'required|in:' . implode(',', array_keys(Report::ERROR_TYPES)),
+            'error_note' => 'required_if:error_type,other|string',
+            'error_photo' => 'required_if:error_type,no_barcode|image',
         ]);
 
         $this->crud->addField([
+            'name' => 'department_id',
+            'type' => 'select',
+            'label' => 'Направление',
+            'entity' => 'department',
+            'attribute' => 'name',
+            'model' => Department::class,
+            'placeholder' => '— выберите направление —',
+        ]);
+        $this->crud->addField([
             'name' => 'worker',
             'type' => 'text',
-            'label' => 'ID сотрудника»',
+            'label' => 'ID сотрудника',
         ]);
         $this->crud->addField([
-            'name' => 'table',
+            'name' => 'square',
             'type' => 'text',
-            'label' => '№ Стола Приемки',
+            'label' => 'Квадрат сотрудника',
         ]);
         $this->crud->addField([
-            'name' => 'reason',
-            'type' => 'text',
-            'label' => 'Причина обезлички',
+            'name' => 'error_type',
+            'type' => 'select_from_array',
+            'label' => 'Ошибка',
+            'options' => Report::ERROR_TYPES,
+            'placeholder' => '— выберите ошибку —',
         ]);
         $this->crud->addField([
-            'name' => 'count',
+            'name' => 'error_note',
             'type' => 'text',
-            'label' => 'Количество',
+            'label' => 'Другая причина (текст)',
+            'hint' => 'Заполняется, если выбрана «Другая причина»',
+        ]);
+        $this->crud->addField([
+            'name' => 'error_photo',
+            'type' => 'upload',
+            'label' => 'Фото (Нет ШК)',
+            'disk' => 's3',
+            'prefix' => 'reports-photos',
+            'hint' => 'Загружается, если выбрано «Нет ШК»',
+        ]);
+
+        // Скрипт условного показа полей «фото» / «текст» в зависимости от выбранной ошибки
+        // (инлайн через custom_html — в Backpack 6.8 метода CrudPanel::addScript нет)
+        $this->crud->addField([
+            'name' => 'report_form_toggle',
+            'type' => 'custom_html',
+            'value' => <<<'HTML'
+<script>
+(function () {
+    function setup() {
+        var select = document.getElementById('error_type');
+        if (!select) { return; }
+        var note = document.getElementById('error_note');
+        var photo = document.getElementById('error_photo');
+        var noteGroup = note ? note.closest('.form-group') : null;
+        var photoGroup = photo ? photo.closest('.form-group') : null;
+        function toggle() {
+            var v = select.value;
+            if (noteGroup) { noteGroup.style.display = (v === 'other') ? '' : 'none'; }
+            if (photoGroup) { photoGroup.style.display = (v === 'no_barcode') ? '' : 'none'; }
+        }
+        select.addEventListener('change', toggle);
+        toggle();
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setup);
+    } else { setup(); }
+})();
+</script>
+HTML,
         ]);
     }
 

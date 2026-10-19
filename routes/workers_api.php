@@ -8,7 +8,7 @@ Route::prefix('v1.0')->group(function (){
     //Для сотрудников
     Route::post('/auth', [ApiController::class, 'auth']);
     Route::post('/update', [ApiController::class, 'update']);
-    Route::post('/select-table', [ApiController::class, 'selectTable']);
+    Route::post('/select-square', [ApiController::class, 'selectSquare']);
     Route::post('/enter-queue', [ApiController::class, 'enterQueue']);
     Route::post('/receive-item', [ApiController::class, 'receiveItem']);
     Route::post('/leave-table', [ApiController::class, 'leaveTable']);
@@ -16,7 +16,7 @@ Route::prefix('v1.0')->group(function (){
 
     //Для грузчиков
     Route::get('/queue/{direction}', [ApiController::class, 'getQueue']);
-    Route::get('/department-tables-length/{direction}', [ApiController::class, 'getDepartmentTablesLength']); //Ограничение сколько столов показывать на странице грузчиков
+    Route::get('/department-tables-length/{direction}', [ApiController::class, 'getDepartmentTablesLength']); //Ограничение сколько заказов (строк) показывать на странице грузчиков
 
     Route::get('/get-param/{param_name}', [ApiController::class, 'getParamValue']);
 

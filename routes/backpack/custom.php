@@ -25,7 +25,7 @@ Route::group([
 ], function () { // custom admin routes
     Route::crud('workers', 'WorkersCrudController');
     Route::crud('departments', 'DepartmentsCrudController');
-    Route::crud('tables', 'TablesCrudController');
+    Route::crud('squares', 'SquaresCrudController');
     Route::crud('queue', 'QueueCrudController');
     Route::crud('loaders-settings', 'LoadersSettingsCrudController');
     Route::crud('reports', 'ReportsCrudController');

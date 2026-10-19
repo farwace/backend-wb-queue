@@ -6,11 +6,11 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class QueueResource extends JsonResource{
     public function toArray($request){
         return [
-            'id' => $this->table->id,
+            'id' => $this->id,
             'isClosed' => $this->is_closed,
             'workerName' => $this->worker->name,
-            'tableName' => $this->table->name,
-            'tableCode' => $this->table->code,
+            'squareName' => $this->square->name ?? $this->square->code,
+            'squareCode' => $this->square->code,
             'timestamp' => $this->updated_at,
             'color' => $this->color,
             'name' => $this->name
