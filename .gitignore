@@ -21,3 +21,8 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# Host/server deployment artifacts (nginx vhosts, per-domain .env, logs, deploy data).
+# Kept out of git. Reusable templates live in docker/prod/deploy/ instead.
+/etc
+/var
