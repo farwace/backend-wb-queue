@@ -229,28 +229,13 @@ class ApiController extends Controller
 
         $squareId = (int)$arRequest['square_id'];
 
-        // Атомарная проверка вместимости: блокируем строку квадрата, чтобы сериализовать параллельный выбор
-        $result = DB::transaction(function () use ($worker, $squareId) {
-            /** @var ?Square $square */
-            $square = Square::query()->where('id', $squareId)->lockForUpdate()->first();
-            if(!$square){
-                return ['ok' => false, 'msg' => 'Не удалось забронировать квадрат! Обновите страницу и попробуйте еще раз'];
-            }
-            $occupied = Worker::query()->where('square_id', $square->id)->where('id', '!=', $worker->id)->count();
-            if($occupied >= (int)$square->max_workers){
-                return ['ok' => false, 'msg' => 'В этом квадрате нет свободных мест! Выберите другой квадрат'];
-            }
-            $worker->square_id = $square->id;
-            $worker->save();
-            return ['ok' => true];
-        });
-
-        if(!$result['ok']){
-            return $this->failure($result['msg'], 422);
-        }
-
-        /** @var Square $square */
+        // Вместимость (max_workers) теперь информационная: проверяем только существование квадрата
         $square = Square::query()->find($squareId);
+        if(!$square){
+            return $this->failure('Не удалось забронировать квадрат! Обновите страницу и попробуйте еще раз', 422);
+        }
+        $worker->square_id = $square->id;
+        $worker->save();
 
         $queueLog = new QueueLog();
         $queueLog->worker_badge = $worker->code;
