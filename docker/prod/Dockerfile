@@ -10,7 +10,7 @@ FROM php:8.4-fpm-alpine
 #   tzdata              - timezone database
 #   *-dev               - headers for the PHP extensions compiled below
 RUN apk add --no-cache \
-        git curl unzip zip nano less tzdata nodejs npm \
+        git curl unzip zip nano less tzdata nodejs npm coreutils \
         postgresql-dev libzip-dev icu-dev \
         libpng-dev libjpeg-turbo-dev freetype-dev \
         linux-headers
@@ -21,12 +21,24 @@ RUN apk add --no-cache \
 #   gd              - image handling
 #   pcntl           - required by queue:work, reverb:start, schedule:work
 #   opcache,exif    - performance / misc
-#   redis (pecl)    - QUEUE_CONNECTION=redis + CACHE/SESSION redis
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j"$(nproc)" \
-        pdo pdo_pgsql pgsql bcmath zip intl gd pcntl opcache exif \
-    && pecl install redis \
-    && docker-php-ext-enable redis
+# Build in separate layers so a failure clearly pinpoints the offending step.
+# NOTE: jobs count uses a safe fallback ($(nproc) may be empty on busybox/alpine).
+RUN set -eux; \
+    JOBS="$(nproc 2>/dev/null || echo 4)"; \
+    docker-php-ext-install -j"$JOBS" \
+        pdo pdo_pgsql pgsql bcmath zip intl pcntl opcache exif
+
+RUN set -eux; \
+    JOBS="$(nproc 2>/dev/null || echo 4)"; \
+    docker-php-ext-configure gd --with-freetype --with-jpeg; \
+    docker-php-ext-install -j"$JOBS" gd
+
+# Redis (PECL) - used for QUEUE_CONNECTION=redis and CACHE/SESSION=redis.
+# channel-update avoids stale-mirror build errors on fresh Alpine images.
+RUN set -eux; \
+    pecl channel-update pecl.php.net || true; \
+    pecl install redis; \
+    docker-php-ext-enable redis
 
 # Composer (for `composer install --no-dev` on the host-mounted code)
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
