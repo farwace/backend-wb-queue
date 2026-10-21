@@ -33,12 +33,26 @@ RUN set -eux; \
     docker-php-ext-configure gd --with-freetype --with-jpeg; \
     docker-php-ext-install -j"$JOBS" gd
 
-# Redis (PECL) - used for QUEUE_CONNECTION=redis and CACHE/SESSION=redis.
-# channel-update avoids stale-mirror build errors on fresh Alpine images.
+# Redis extension (used for QUEUE_CONNECTION=redis and CACHE/SESSION=redis).
+# We deliberately do NOT use `pecl` here: the server cannot reach pecl.php.net
+# (timeouts on 443/80), and PECL itself is now deprecated in favour of PIE.
+# Instead we build phpredis directly from the GitHub release tarball, which is
+# reachable over the same path as `git pull`. 6.3.0 supports PHP 8.4.
+ARG REDIS_VERSION=6.3.0
 RUN set -eux; \
-    pecl channel-update pecl.php.net || true; \
-    pecl install redis; \
-    docker-php-ext-enable redis
+    JOBS="$(nproc 2>/dev/null || echo 4)"; \
+    mkdir -p /usr/src/phpredis; \
+    curl -fsSL "https://github.com/phpredis/phpredis/archive/${REDIS_VERSION}.tar.gz" -o /tmp/phpredis.tgz; \
+    tar -xzf /tmp/phpredis.tgz -C /usr/src/phpredis --strip-components=1; \
+    rm -f /tmp/phpredis.tgz; \
+    cd /usr/src/phpredis; \
+    phpize; \
+    ./configure; \
+    make -j"$JOBS"; \
+    make install; \
+    docker-php-ext-enable redis; \
+    cd /; \
+    rm -rf /usr/src/phpredis
 
 # Composer (for `composer install --no-dev` on the host-mounted code)
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
