@@ -100,20 +100,39 @@ class ReportsCrudController extends CrudController
             'label' => 'Другая причина (текст)',
         ]);
         $this->crud->addColumn([
+            'name' => 'product_barcode',
+            'type' => 'text',
+            'label' => 'ID (ШК) товара',
+        ]);
+        $this->crud->addColumn([
             'name' => 'neighbor_barcode',
             'type' => 'text',
-            'label' => 'Соседний ШК с поступления',
+            'label' => 'Соседний ID (ШК) с поступления',
         ]);
         $this->crud->addColumn([
-            'name' => 'bk',
+            'name' => 'ttn_type',
+            'type' => 'closure',
+            'label' => 'ТТН',
+            'function' => function ($entry) {
+                return e($entry->ttnTypeLabel());
+            }
+        ]);
+        $this->crud->addColumn([
+            'name' => 'ttn_number',
             'type' => 'text',
-            'label' => 'БК',
+            'label' => 'Номер ТТН',
         ]);
         $this->crud->addColumn([
-            'name' => 'error_photo',
+            'name' => 'product_photo',
             'type' => 'model_function',
-            'label' => 'Фото',
-            'function_name' => 'errorPhotoHtml',
+            'label' => 'Фото товара',
+            'function_name' => 'productPhotoHtml',
+        ]);
+        $this->crud->addColumn([
+            'name' => 'office_id_photo',
+            'type' => 'model_function',
+            'label' => 'ID Офиса (фото)',
+            'function_name' => 'officeIdPhotoHtml',
         ]);
     }
 
@@ -129,9 +148,12 @@ class ReportsCrudController extends CrudController
             'square' => 'required|string',
             'error_type' => 'required|in:' . implode(',', array_keys(Report::ERROR_TYPES)),
             'error_note' => 'required_if:error_type,other|string',
-            'error_photo' => 'required_if:error_type,no_barcode|image',
+            'product_barcode' => 'required_if:error_type,not_in_order,office_error|nullable|string',
             'neighbor_barcode' => 'required_if:error_type,no_barcode|nullable|string',
-            'bk' => 'required_if:error_type,no_barcode|nullable|string',
+            'ttn_type' => 'required_if:error_type,not_in_order,no_barcode|nullable|in:' . implode(',', array_keys(Report::TTN_TYPES)),
+            'ttn_number' => 'required_if:error_type,not_in_order,no_barcode|nullable|regex:/^\d+$/',
+            'product_photo' => 'required_if:error_type,not_in_order,office_error,no_barcode|nullable|image',
+            'office_id_photo' => 'required_if:error_type,office_error|nullable|image',
         ]);
 
         $this->crud->addField([
@@ -169,30 +191,51 @@ class ReportsCrudController extends CrudController
             'name' => 'error_note',
             'type' => 'text',
             'label' => 'Другая причина (текст)',
-            'hint' => 'Заполняется, если выбрана «Другая причина»',
+            'hint' => 'Для «Другая причина»',
+        ]);
+        $this->crud->addField([
+            'name' => 'product_barcode',
+            'type' => 'text',
+            'label' => 'ID (ШК) товара',
+            'hint' => 'Для «Товар не в заказе» / «Неверный офис»',
         ]);
         $this->crud->addField([
             'name' => 'neighbor_barcode',
             'type' => 'text',
-            'label' => 'Соседний ШК с этого поступления',
-            'hint' => 'Заполняется, если выбрано «Нет ШК»',
+            'label' => 'Соседний ID (ШК) с поступления',
+            'hint' => 'Для «Без ID (ШК)»',
         ]);
         $this->crud->addField([
-            'name' => 'bk',
+            'name' => 'ttn_type',
+            'type' => 'select_from_array',
+            'label' => 'ТТН',
+            'options' => Report::TTN_TYPES,
+            'placeholder' => '— выберите ТТН —',
+            'hint' => 'Для «Товар не в заказе» / «Без ID (ШК)»',
+        ]);
+        $this->crud->addField([
+            'name' => 'ttn_number',
             'type' => 'text',
-            'label' => 'БК',
-            'hint' => 'Заполняется, если выбрано «Нет ШК»',
+            'label' => 'Номер ТТН',
+            'hint' => 'Только цифры',
         ]);
         $this->crud->addField([
-            'name' => 'error_photo',
+            'name' => 'product_photo',
             'type' => 'upload',
-            'label' => 'Фото (Нет ШК)',
+            'label' => 'Фото товара',
             'disk' => 's3',
             'prefix' => 'reports-photos',
-            'hint' => 'Загружается, если выбрано «Нет ШК»',
+        ]);
+        $this->crud->addField([
+            'name' => 'office_id_photo',
+            'type' => 'upload',
+            'label' => 'ID Офиса (фото)',
+            'disk' => 's3',
+            'prefix' => 'reports-photos',
+            'hint' => 'Для «Неверный офис»',
         ]);
 
-        // Скрипт условного показа полей «фото» / «текст» в зависимости от выбранной ошибки
+        // Условный показ полей в зависимости от выбранного типа ошибки
         // (инлайн через custom_html — в Backpack 6.8 метода CrudPanel::addScript нет)
         $this->crud->addField([
             'name' => 'report_form_toggle',
@@ -200,25 +243,31 @@ class ReportsCrudController extends CrudController
             'value' => <<<'HTML'
 <script>
 (function () {
+    // элемент => список типов ошибки, при которых поле показывается
+    var rules = {
+        error_note: ['other'],
+        product_barcode: ['not_in_order', 'office_error'],
+        neighbor_barcode: ['no_barcode'],
+        ttn_type: ['not_in_order', 'no_barcode'],
+        ttn_number: ['not_in_order', 'no_barcode'],
+        product_photo: ['not_in_order', 'office_error', 'no_barcode'],
+        office_id_photo: ['office_error']
+    };
     function setup() {
         var select = document.getElementById('error_type');
         if (!select) { return; }
-        var note = document.getElementById('error_note');
-        var photo = document.getElementById('error_photo');
-        var neighbor = document.getElementById('neighbor_barcode');
-        var bk = document.getElementById('bk');
-        var noteGroup = note ? note.closest('.form-group') : null;
-        var photoGroup = photo ? photo.closest('.form-group') : null;
-        var neighborGroup = neighbor ? neighbor.closest('.form-group') : null;
-        var bkGroup = bk ? bk.closest('.form-group') : null;
+        var groups = {};
+        Object.keys(rules).forEach(function (key) {
+            var el = document.getElementById(key);
+            groups[key] = el ? el.closest('.form-group') : null;
+        });
         function toggle() {
             var v = select.value;
-            var isOther = (v === 'other');
-            var isNoBarcode = (v === 'no_barcode');
-            if (noteGroup) { noteGroup.style.display = isOther ? '' : 'none'; }
-            if (photoGroup) { photoGroup.style.display = isNoBarcode ? '' : 'none'; }
-            if (neighborGroup) { neighborGroup.style.display = isNoBarcode ? '' : 'none'; }
-            if (bkGroup) { bkGroup.style.display = isNoBarcode ? '' : 'none'; }
+            Object.keys(rules).forEach(function (key) {
+                if (groups[key]) {
+                    groups[key].style.display = rules[key].indexOf(v) !== -1 ? '' : 'none';
+                }
+            });
         }
         select.addEventListener('change', toggle);
         toggle();

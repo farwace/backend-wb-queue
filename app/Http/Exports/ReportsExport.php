@@ -25,9 +25,12 @@ class ReportsExport implements ISimpleCsvExporter
             'Квадрат сотрудника',
             'Ошибка',
             'Другая причина (текст)',
-            'Соседний ШК с этого поступления',
-            'БК',
-            'Фото',
+            'ID (ШК) товара',
+            'Соседний ID (ШК) с поступления',
+            'ТТН',
+            'Номер ТТН',
+            'Фото товара',
+            'ID Офиса (фото)',
         ];
     }
 
@@ -66,9 +69,12 @@ class ReportsExport implements ISimpleCsvExporter
                 $report->square,
                 $report->errorTypeLabel(),
                 $report->error_note,
+                $report->product_barcode,
                 $report->neighbor_barcode,
-                $report->bk,
-                !empty($report->error_photo) ? (env('AWS_ENDPOINT') . '/' . env('AWS_BUCKET') . '/' . $report->error_photo) : '',
+                $report->ttnTypeLabel(),
+                $report->ttn_number,
+                !empty($report->product_photo) ? (env('AWS_ENDPOINT') . '/' . env('AWS_BUCKET') . '/' . $report->product_photo) : '',
+                !empty($report->office_id_photo) ? (env('AWS_ENDPOINT') . '/' . env('AWS_BUCKET') . '/' . $report->office_id_photo) : '',
             ];
 
             $data[] = $row;

@@ -19,11 +19,25 @@ class SubmitReportRequest extends FormRequest{
             'name' => 'required|string',
             'square' => 'required|string',
             'error_type' => 'required|in:' . implode(',', array_keys(Report::ERROR_TYPES)),
+
+            // «Другая причина» — обязательен текст
             'error_note' => 'required_if:error_type,other|string',
-            // При ошибке «Нет ШК» обязательны: фото, соседний ШК и БК
-            'error_photo' => 'required_if:error_type,no_barcode|file|image|mimes:jpg,jpeg,png,webp|max:10240',
+
+            // ID (ШК) товара — для «Товар не в заказе» и «Неверный офис»
+            'product_barcode' => 'required_if:error_type,not_in_order,office_error|nullable|string',
+
+            // Соседний ID (ШК) с поступления — для «Без ID (ШК)»
             'neighbor_barcode' => 'required_if:error_type,no_barcode|nullable|string',
-            'bk' => 'required_if:error_type,no_barcode|nullable|string',
+
+            // ТТН + номер — для «Товар не в заказе» и «Без ID (ШК)»
+            'ttn_type' => 'required_if:error_type,not_in_order,no_barcode|nullable|in:' . implode(',', array_keys(Report::TTN_TYPES)),
+            'ttn_number' => 'required_if:error_type,not_in_order,no_barcode|nullable|regex:/^\d+$/',
+
+            // Фото товара — для «Товар не в заказе», «Неверный офис», «Без ID (ШК)»
+            'product_photo' => 'required_if:error_type,not_in_order,office_error,no_barcode|nullable|file|image|mimes:jpg,jpeg,png,webp|max:10240',
+
+            // Фото «ID Офиса» — только для «Неверный офис»
+            'office_id_photo' => 'required_if:error_type,office_error|nullable|file|image|mimes:jpg,jpeg,png,webp|max:10240',
         ];
     }
 
@@ -35,9 +49,12 @@ class SubmitReportRequest extends FormRequest{
             'square' => '«Квадрат сотрудника»',
             'error_type' => '«Ошибка»',
             'error_note' => '«Другая причина»',
-            'neighbor_barcode' => '«Соседний ШК с этого поступления»',
-            'bk' => '«БК»',
-            'error_photo' => '«Фото»',
+            'product_barcode' => '«ID (ШК) товара»',
+            'neighbor_barcode' => '«Соседний ID (ШК) с поступления»',
+            'ttn_type' => '«ТТН»',
+            'ttn_number' => '«Номер ТТН»',
+            'product_photo' => '«Фото товара»',
+            'office_id_photo' => '«ID Офиса (фото)»',
         ];
     }
 }

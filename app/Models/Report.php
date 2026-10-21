@@ -8,20 +8,23 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Отписка (ошибка при приемке)
+ * Отписка (ошибка при приемке) — сотрудники
  * @property int $id
  * @property \DateTime $created_at
  * @property \DateTime $updated_at
  * @property Department $department
  * @property ?int $department_id
- * @property ?string $worker         ID сотрудника (номер бейджа)
- * @property ?string $name           Имя сотрудника
- * @property ?string $square         квадрат сотрудника
- * @property ?string $error_type     not_in_order|office_error|no_barcode|other
- * @property ?string $error_note     текст для «другая причина»
- * @property ?string $neighbor_barcode соседний ШК с поступления (для «Нет ШК»)
- * @property ?string $bk             БК (для «Нет ШК»)
- * @property ?string $error_photo    путь к фото для «Нет ШК»
+ * @property ?string $worker          ID сотрудника (номер бейджа)
+ * @property ?string $name            Имя сотрудника
+ * @property ?string $square          квадрат сотрудника
+ * @property ?string $error_type      not_in_order|office_error|no_barcode|other
+ * @property ?string $error_note      текст для «Другая причина»
+ * @property ?string $product_barcode ID (ШК) товара
+ * @property ?string $neighbor_barcode соседний ID (ШК) с поступления (для «Без ID (ШК)»)
+ * @property ?string $ttn_type        wb_gi|wb_mp|grid_number
+ * @property ?string $ttn_number      номер ТТН (только цифры)
+ * @property ?string $product_photo   путь к фото товара
+ * @property ?string $office_id_photo путь к фото «ID Офиса»
  */
 class Report extends Model{
     use CrudTrait;
@@ -31,9 +34,18 @@ class Report extends Model{
      */
     public const ERROR_TYPES = [
         'not_in_order' => 'Товар не в заказе',
-        'office_error' => 'Ошибка офиса',
-        'no_barcode'   => 'Нет ШК',
+        'office_error' => 'Неверный офис',
+        'no_barcode'   => 'Без ID (ШК)',
         'other'        => 'Другая причина',
+    ];
+
+    /**
+     * Варианты ТТН: значение => отображаемая подпись.
+     */
+    public const TTN_TYPES = [
+        'wb_gi'       => 'WB-GI',
+        'wb_mp'       => 'WB-MP',
+        'grid_number' => 'Номер сетки',
     ];
 
     protected $table = 'reports';
@@ -42,8 +54,10 @@ class Report extends Model{
     protected static function booted()
     {
         static::deleting(function (Report $report) {
-            if(!empty($report->error_photo) && Storage::disk('s3')->exists($report->error_photo)){
-                Storage::disk('s3')->delete($report->error_photo);
+            foreach (['product_photo', 'office_id_photo'] as $field) {
+                if (!empty($report->$field) && Storage::disk('s3')->exists($report->$field)) {
+                    Storage::disk('s3')->delete($report->$field);
+                }
             }
         });
     }
@@ -61,6 +75,14 @@ class Report extends Model{
         return self::ERROR_TYPES[$this->error_type] ?? (string)$this->error_type;
     }
 
+    /**
+     * Человекочитаемая подпись выбранного типа ТТН.
+     */
+    public function ttnTypeLabel(): string
+    {
+        return self::TTN_TYPES[$this->ttn_type] ?? (string)$this->ttn_type;
+    }
+
     public function exportButtonContent()
     {
         return '<a href="/admin/reports-export" target="_blank" class="btn btn-primary" data-style="zoom-in">
@@ -69,15 +91,31 @@ class Report extends Model{
     }
 
     /**
-     * Колонка списка: миниатюра фото ошибки (если загружено).
+     * Отрисовка миниатюры фото по пути в s3 (пустая строка, если фото нет).
      */
-    public function errorPhotoHtml(): string
+    private function photoHtml(?string $path): string
     {
-        if(empty($this->error_photo)){
+        if (empty($path)) {
             return '';
         }
-        $url = Storage::disk('s3')->url($this->error_photo);
+        $url = Storage::disk('s3')->url($path);
         $safe = e($url);
         return '<a href="' . $safe . '" target="_blank"><img src="' . $safe . '" height="40" style="border-radius:4px;" alt="фото"></a>';
+    }
+
+    /**
+     * Колонка списка: миниатюра «Фото товара».
+     */
+    public function productPhotoHtml(): string
+    {
+        return $this->photoHtml($this->product_photo);
+    }
+
+    /**
+     * Колонка списка: миниатюра фото «ID Офиса».
+     */
+    public function officeIdPhotoHtml(): string
+    {
+        return $this->photoHtml($this->office_id_photo);
     }
 }
