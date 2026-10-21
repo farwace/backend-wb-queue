@@ -16,10 +16,14 @@ class SubmitReportRequest extends FormRequest{
     {
         return [
             'worker' => 'required|string',
+            'name' => 'required|string',
             'square' => 'required|string',
             'error_type' => 'required|in:' . implode(',', array_keys(Report::ERROR_TYPES)),
             'error_note' => 'required_if:error_type,other|string',
+            // При ошибке «Нет ШК» обязательны: фото, соседний ШК и БК
             'error_photo' => 'required_if:error_type,no_barcode|file|image|mimes:jpg,jpeg,png,webp|max:10240',
+            'neighbor_barcode' => 'required_if:error_type,no_barcode|nullable|string',
+            'bk' => 'required_if:error_type,no_barcode|nullable|string',
         ];
     }
 
@@ -27,9 +31,12 @@ class SubmitReportRequest extends FormRequest{
     {
         return [
             'worker' => '«ID сотрудника»',
+            'name' => '«Имя»',
             'square' => '«Квадрат сотрудника»',
             'error_type' => '«Ошибка»',
             'error_note' => '«Другая причина»',
+            'neighbor_barcode' => '«Соседний ШК с этого поступления»',
+            'bk' => '«БК»',
             'error_photo' => '«Фото»',
         ];
     }

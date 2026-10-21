@@ -21,9 +21,12 @@ class ReportsExport implements ISimpleCsvExporter
             'Дата',
             'Направление',
             'ID сотрудника',
+            'Имя',
             'Квадрат сотрудника',
             'Ошибка',
             'Другая причина (текст)',
+            'Соседний ШК с этого поступления',
+            'БК',
             'Фото',
         ];
     }
@@ -59,9 +62,12 @@ class ReportsExport implements ISimpleCsvExporter
                 Carbon::parse($report->created_at)->timezone('Europe/Moscow')->toDateTimeString(),
                 $report->department ? $report->department->name : '',
                 $report->worker,
+                $report->name,
                 $report->square,
                 $report->errorTypeLabel(),
                 $report->error_note,
+                $report->neighbor_barcode,
+                $report->bk,
                 !empty($report->error_photo) ? (env('AWS_ENDPOINT') . '/' . env('AWS_BUCKET') . '/' . $report->error_photo) : '',
             ];
 

@@ -14,10 +14,13 @@ use Illuminate\Support\Facades\Storage;
  * @property \DateTime $updated_at
  * @property Department $department
  * @property ?int $department_id
- * @property ?string $worker         ID сотрудника
+ * @property ?string $worker         ID сотрудника (номер бейджа)
+ * @property ?string $name           Имя сотрудника
  * @property ?string $square         квадрат сотрудника
  * @property ?string $error_type     not_in_order|office_error|no_barcode|other
  * @property ?string $error_note     текст для «другая причина»
+ * @property ?string $neighbor_barcode соседний ШК с поступления (для «Нет ШК»)
+ * @property ?string $bk             БК (для «Нет ШК»)
  * @property ?string $error_photo    путь к фото для «Нет ШК»
  */
 class Report extends Model{

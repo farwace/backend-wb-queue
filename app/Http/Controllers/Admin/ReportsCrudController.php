@@ -77,6 +77,11 @@ class ReportsCrudController extends CrudController
             'label' => 'ID сотрудника',
         ]);
         $this->crud->addColumn([
+            'name' => 'name',
+            'type' => 'text',
+            'label' => 'Имя',
+        ]);
+        $this->crud->addColumn([
             'name' => 'square',
             'type' => 'text',
             'label' => 'Квадрат сотрудника',
@@ -95,6 +100,16 @@ class ReportsCrudController extends CrudController
             'label' => 'Другая причина (текст)',
         ]);
         $this->crud->addColumn([
+            'name' => 'neighbor_barcode',
+            'type' => 'text',
+            'label' => 'Соседний ШК с поступления',
+        ]);
+        $this->crud->addColumn([
+            'name' => 'bk',
+            'type' => 'text',
+            'label' => 'БК',
+        ]);
+        $this->crud->addColumn([
             'name' => 'error_photo',
             'type' => 'model_function',
             'label' => 'Фото',
@@ -110,10 +125,13 @@ class ReportsCrudController extends CrudController
     protected function setupCreateOperation(){
         $this->crud->setValidationFromArray([
             'worker' => 'required|string',
+            'name' => 'required|string',
             'square' => 'required|string',
             'error_type' => 'required|in:' . implode(',', array_keys(Report::ERROR_TYPES)),
             'error_note' => 'required_if:error_type,other|string',
             'error_photo' => 'required_if:error_type,no_barcode|image',
+            'neighbor_barcode' => 'required_if:error_type,no_barcode|nullable|string',
+            'bk' => 'required_if:error_type,no_barcode|nullable|string',
         ]);
 
         $this->crud->addField([
@@ -129,6 +147,11 @@ class ReportsCrudController extends CrudController
             'name' => 'worker',
             'type' => 'text',
             'label' => 'ID сотрудника',
+        ]);
+        $this->crud->addField([
+            'name' => 'name',
+            'type' => 'text',
+            'label' => 'Имя',
         ]);
         $this->crud->addField([
             'name' => 'square',
@@ -147,6 +170,18 @@ class ReportsCrudController extends CrudController
             'type' => 'text',
             'label' => 'Другая причина (текст)',
             'hint' => 'Заполняется, если выбрана «Другая причина»',
+        ]);
+        $this->crud->addField([
+            'name' => 'neighbor_barcode',
+            'type' => 'text',
+            'label' => 'Соседний ШК с этого поступления',
+            'hint' => 'Заполняется, если выбрано «Нет ШК»',
+        ]);
+        $this->crud->addField([
+            'name' => 'bk',
+            'type' => 'text',
+            'label' => 'БК',
+            'hint' => 'Заполняется, если выбрано «Нет ШК»',
         ]);
         $this->crud->addField([
             'name' => 'error_photo',
@@ -170,12 +205,20 @@ class ReportsCrudController extends CrudController
         if (!select) { return; }
         var note = document.getElementById('error_note');
         var photo = document.getElementById('error_photo');
+        var neighbor = document.getElementById('neighbor_barcode');
+        var bk = document.getElementById('bk');
         var noteGroup = note ? note.closest('.form-group') : null;
         var photoGroup = photo ? photo.closest('.form-group') : null;
+        var neighborGroup = neighbor ? neighbor.closest('.form-group') : null;
+        var bkGroup = bk ? bk.closest('.form-group') : null;
         function toggle() {
             var v = select.value;
-            if (noteGroup) { noteGroup.style.display = (v === 'other') ? '' : 'none'; }
-            if (photoGroup) { photoGroup.style.display = (v === 'no_barcode') ? '' : 'none'; }
+            var isOther = (v === 'other');
+            var isNoBarcode = (v === 'no_barcode');
+            if (noteGroup) { noteGroup.style.display = isOther ? '' : 'none'; }
+            if (photoGroup) { photoGroup.style.display = isNoBarcode ? '' : 'none'; }
+            if (neighborGroup) { neighborGroup.style.display = isNoBarcode ? '' : 'none'; }
+            if (bkGroup) { bkGroup.style.display = isNoBarcode ? '' : 'none'; }
         }
         select.addEventListener('change', toggle);
         toggle();

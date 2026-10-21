@@ -27,9 +27,12 @@ class ApiController extends ReportsReplyController
 
         $report = new Report();
         $report->worker = $request->validated('worker');
+        $report->name = $request->validated('name');
         $report->square = $request->validated('square');
         $report->error_type = $request->validated('error_type');
         $report->error_note = $request->validated('error_note');
+        $report->neighbor_barcode = $request->validated('neighbor_barcode');
+        $report->bk = $request->validated('bk');
         $report->department_id = $direction->id;
 
         // Фото обязательно только для ошибки «Нет ШК»
