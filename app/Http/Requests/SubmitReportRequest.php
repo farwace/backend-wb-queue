@@ -54,7 +54,7 @@ class SubmitReportRequest extends FormRequest{
             'ttn_type' => '«ТТН»',
             'ttn_number' => '«Номер ТТН»',
             'product_photo' => '«Фото товара»',
-            'office_id_photo' => '«ID Офиса (фото)»',
+            'office_id_photo' => '«Фото ошибки с ТСД»',
         ];
     }
 }

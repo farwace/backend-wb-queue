@@ -35,7 +35,8 @@ $COMPOSE exec -T app php artisan view:cache
 $COMPOSE exec -T app php artisan up
 
 echo "♻️  restarting php containers (clear OPcache) + resuming workers"
-$COMPOSE restart app queue reverb scheduler
+# nginx included so it re-resolves app/reverb IPs (guards against stale-upstream 502)
+$COMPOSE restart app queue reverb scheduler nginx
 $COMPOSE exec -T app php artisan queue:restart || true
 
 echo "✅ deploy done"

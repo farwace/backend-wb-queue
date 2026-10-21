@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Storage;
  * @property ?string $ttn_type        wb_gi|wb_mp|grid_number
  * @property ?string $ttn_number      номер ТТН (только цифры)
  * @property ?string $product_photo   путь к фото товара
- * @property ?string $office_id_photo путь к фото «ID Офиса»
+ * @property ?string $office_id_photo путь к фото «Ошибка с ТСД»
  */
 class Report extends Model{
     use CrudTrait;

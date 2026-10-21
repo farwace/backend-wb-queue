@@ -131,7 +131,7 @@ class ReportsCrudController extends CrudController
         $this->crud->addColumn([
             'name' => 'office_id_photo',
             'type' => 'model_function',
-            'label' => 'ID Офиса (фото)',
+            'label' => 'Фото ошибки с ТСД',
             'function_name' => 'officeIdPhotoHtml',
         ]);
     }
@@ -229,7 +229,7 @@ class ReportsCrudController extends CrudController
         $this->crud->addField([
             'name' => 'office_id_photo',
             'type' => 'upload',
-            'label' => 'ID Офиса (фото)',
+            'label' => 'Фото ошибки с ТСД',
             'disk' => 's3',
             'prefix' => 'reports-photos',
             'hint' => 'Для «Неверный офис»',

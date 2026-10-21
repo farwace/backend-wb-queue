@@ -30,7 +30,7 @@ class ReportsExport implements ISimpleCsvExporter
             'ТТН',
             'Номер ТТН',
             'Фото товара',
-            'ID Офиса (фото)',
+            'Фото ошибки с ТСД',
         ];
     }
 
