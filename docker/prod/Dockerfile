@@ -38,8 +38,11 @@ RUN set -eux; \
 # (timeouts on 443/80), and PECL itself is now deprecated in favour of PIE.
 # Instead we build phpredis directly from the GitHub release tarball, which is
 # reachable over the same path as `git pull`. 6.3.0 supports PHP 8.4.
+# $PHPIZE_DEPS (autoconf/re2c/g++/make) are required by phpize but are stripped
+# from the base php image after its own build, so we add them only for this step.
 ARG REDIS_VERSION=6.3.0
 RUN set -eux; \
+    apk add --no-cache --virtual .redis-build-deps $PHPIZE_DEPS; \
     JOBS="$(nproc 2>/dev/null || echo 4)"; \
     mkdir -p /usr/src/phpredis; \
     curl -fsSL "https://github.com/phpredis/phpredis/archive/${REDIS_VERSION}.tar.gz" -o /tmp/phpredis.tgz; \
@@ -52,7 +55,8 @@ RUN set -eux; \
     make install; \
     docker-php-ext-enable redis; \
     cd /; \
-    rm -rf /usr/src/phpredis
+    rm -rf /usr/src/phpredis; \
+    apk del .redis-build-deps
 
 # Composer (for `composer install --no-dev` on the host-mounted code)
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
