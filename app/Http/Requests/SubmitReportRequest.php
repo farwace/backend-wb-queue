@@ -24,12 +24,21 @@ class SubmitReportRequest extends FormRequest{
             // ID (ШК) товара — фото, для «Товар не в заказе» и «Неверный офис»
             'product_barcode' => 'required_if:error_type,not_in_order,office_error|nullable|file|image|mimes:jpg,jpeg,png,webp|max:10240',
 
+            // ID (ШК) товара №1 / №2 — фото, для «Два ШК»
+            'product_barcode_1' => 'required_if:error_type,two_barcodes|nullable|file|image|mimes:jpg,jpeg,png,webp|max:10240',
+            'product_barcode_2' => 'required_if:error_type,two_barcodes|nullable|file|image|mimes:jpg,jpeg,png,webp|max:10240',
+
+            // Коды QR, распознанные на фронте с фото ШК (сервер сверяет свою копию в ApiController)
+            'product_barcode_value' => 'nullable|string|max:255',
+            'product_barcode_1_value' => 'nullable|string|max:255',
+            'product_barcode_2_value' => 'nullable|string|max:255',
+
             // Соседний ID (ШК) с поступления — для «Без ID (ШК)»
             'neighbor_barcode' => 'required_if:error_type,no_barcode|nullable|string',
 
-            // ТТН + номер — для «Без ID (ШК)»
-            'ttn_type' => 'required_if:error_type,no_barcode|nullable|in:' . implode(',', array_keys(Report::TTN_TYPES)),
-            'ttn_number' => 'required_if:error_type,no_barcode|nullable|regex:/^\d+$/',
+            // ТТН + номер — для «Без ID (ШК)», необязательные
+            'ttn_type' => 'nullable|in:' . implode(',', array_keys(Report::TTN_TYPES)),
+            'ttn_number' => 'nullable|regex:/^\d+$/',
 
             // Фото товара — для «Товар не в заказе», «Неверный офис», «Без ID (ШК)»
             'product_photo' => 'required_if:error_type,not_in_order,office_error,no_barcode|nullable|file|image|mimes:jpg,jpeg,png,webp|max:10240',
@@ -46,6 +55,11 @@ class SubmitReportRequest extends FormRequest{
             'error_type' => '«Ошибка»',
             'error_note' => '«Другая причина»',
             'product_barcode' => '«ID (ШК) товара»',
+            'product_barcode_1' => '«ID (ШК) товара №1»',
+            'product_barcode_2' => '«ID (ШК) товара №2»',
+            'product_barcode_value' => '«QR-код с фото ID (ШК) товара»',
+            'product_barcode_1_value' => '«QR-код с фото ID (ШК) товара №1»',
+            'product_barcode_2_value' => '«QR-код с фото ID (ШК) товара №2»',
             'neighbor_barcode' => '«Соседний ID (ШК) с поступления»',
             'ttn_type' => '«ТТН»',
             'ttn_number' => '«Номер ТТН»',

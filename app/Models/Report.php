@@ -17,9 +17,17 @@ use Illuminate\Support\Facades\Storage;
  * @property ?string $worker          ID сотрудника (номер бейджа)
  * @property ?string $name            [не используется в форме] имя сотрудника
  * @property ?string $square          [не используется в форме] квадрат сотрудника
- * @property ?string $error_type      not_in_order|office_error|no_barcode|other
+ * @property ?string $error_type      not_in_order|office_error|no_barcode|two_barcodes|other
  * @property ?string $error_note      текст для «Другая причина»
  * @property ?string $product_barcode путь к фото «ID (ШК) товара»
+ * @property ?string $product_barcode_1 путь к фото «ID (ШК) товара №1» (для «Два ШК»)
+ * @property ?string $product_barcode_2 путь к фото «ID (ШК) товара №2» (для «Два ШК»)
+ * @property ?string $product_barcode_value QR-код с фото, распознанный на фронте
+ * @property ?string $product_barcode_1_value QR-код с фото №1, распознанный на фронте
+ * @property ?string $product_barcode_2_value QR-код с фото №2, распознанный на фронте
+ * @property ?string $qr_server_values JSON: коды, распознанные сервером (сверка)
+ * @property bool $qr_mismatch расхождение клиентского и серверного QR-кода
+ * @property bool $processed пометка админа: запись обработана
  * @property ?string $neighbor_barcode соседний ID (ШК) с поступления (для «Без ID (ШК)»)
  * @property ?string $ttn_type        wb_gi|wb_mp|grid_number
  * @property ?string $ttn_number      номер ТТН (только цифры)
@@ -33,10 +41,11 @@ class Report extends Model{
      * Возможные типы ошибки: значение => отображаемая подпись.
      */
     public const ERROR_TYPES = [
-        'not_in_order' => 'Товар не в заказе',
-        'office_error' => 'Неверный офис',
-        'no_barcode'   => 'Без ID (ШК)',
-        'other'        => 'Другая причина',
+        'not_in_order'   => 'Товар не в заказе',
+        'office_error'   => 'Неверный офис',
+        'no_barcode'     => 'Без ID (ШК)',
+        'two_barcodes'   => 'Два ШК',
+        'other'          => 'Другая причина',
     ];
 
     /**
@@ -51,10 +60,15 @@ class Report extends Model{
     protected $table = 'reports';
     protected $guarded = ['id'];
 
+    protected $casts = [
+        'qr_mismatch' => 'boolean',
+        'processed' => 'boolean',
+    ];
+
     protected static function booted()
     {
         static::deleting(function (Report $report) {
-            foreach (['product_barcode', 'product_photo', 'office_id_photo'] as $field) {
+            foreach (['product_barcode', 'product_barcode_1', 'product_barcode_2', 'product_photo', 'office_id_photo'] as $field) {
                 if (!empty($report->$field) && Storage::disk('s3')->exists($report->$field)) {
                     Storage::disk('s3')->delete($report->$field);
                 }
@@ -104,11 +118,52 @@ class Report extends Model{
     }
 
     /**
-     * Колонка списка: миниатюра фото «ID (ШК) товара».
+     * Колонка списка: миниатюра фото «ID (ШК) товара» + распознанный QR-код.
      */
     public function productBarcodePhotoHtml(): string
     {
-        return $this->photoHtml($this->product_barcode);
+        return $this->photoHtml($this->product_barcode) . $this->qrValueHtml($this->product_barcode_value);
+    }
+
+    /**
+     * Колонка списка: миниатюра фото «ID (ШК) товара №1» («Два ШК») + QR-код.
+     */
+    public function productBarcode1PhotoHtml(): string
+    {
+        return $this->photoHtml($this->product_barcode_1) . $this->qrValueHtml($this->product_barcode_1_value);
+    }
+
+    /**
+     * Колонка списка: миниатюра фото «ID (ШК) товара №2» («Два ШК») + QR-код.
+     */
+    public function productBarcode2PhotoHtml(): string
+    {
+        return $this->photoHtml($this->product_barcode_2) . $this->qrValueHtml($this->product_barcode_2_value);
+    }
+
+    /**
+     * Текст распознанного QR-кода под миниатюрой фото.
+     */
+    private function qrValueHtml(?string $value): string
+    {
+        if (empty($value)) {
+            return '';
+        }
+        return '<div class="small"><code>' . e($value) . '</code></div>';
+    }
+
+    /**
+     * Колонка/детали: предупреждение о расхождении клиентского и серверного QR-кода.
+     */
+    public function qrMismatchHtml(): string
+    {
+        if (!$this->qr_mismatch) {
+            return '';
+        }
+        $server = json_decode((string)$this->qr_server_values, true) ?: [];
+        $serverText = implode(', ', array_map(fn ($v) => (string)$v, $server));
+        return '<span class="text-warning fw-bold">⚠️ Расхождение ШК!</span>'
+            . '<div class="small">Сервер: <code>' . e($serverText) . '</code></div>';
     }
 
     /**

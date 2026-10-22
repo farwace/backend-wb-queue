@@ -29,6 +29,10 @@ Route::group([
     Route::crud('queue', 'QueueCrudController');
     Route::crud('loaders-settings', 'LoadersSettingsCrudController');
     Route::crud('reports', 'ReportsCrudController');
+    // AJAX-переключение отметки «Обработано» в списке отписок
+    Route::post('/reports/{id}/toggle-processed', 'ReportsCrudController@toggleProcessed')
+        ->whereNumber('id')
+        ->name('admin.reports.toggle-processed');
     Route::crud('incidents', 'IncidentsCrudController');
     Route::crud('replies', 'RepliesCrudController');
     Route::crud('admins', 'AdminsCrudController');
