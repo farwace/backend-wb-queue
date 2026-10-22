@@ -24,8 +24,17 @@ trait CSVExportTrait {
         }
 
         $storagePath = storage_path("app/exports/{$tmpFileName}");
-        Storage::makeDirectory('exports');
+        // Гарантируем наличие физическиого каталога под выгрузку. Storage::makeDirectory()
+        // работает на дефолтном диске (в проде это s3) и физическую папку не создаёт,
+        // из-за чего fopen(...) падал с «No such file or directory».
+        $exportDir = dirname($storagePath);
+        if (!is_dir($exportDir)) {
+            @mkdir($exportDir, 0775, true);
+        }
         $file = fopen($storagePath, $step === 1 ? 'w' : 'a');
+        if ($file === false) {
+            throw new \RuntimeException('Не удалось открыть файл выгрузки: ' . $storagePath);
+        }
 
         $startTime = microtime(true);
         $currentStep = $step;
