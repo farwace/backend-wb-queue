@@ -6,6 +6,7 @@ namespace App\Http\Exports;
 use App\Http\Traits\CSVExportTrait;
 use App\Models\Report;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 class ReportsExport implements ISimpleCsvExporter
 {
@@ -65,16 +66,24 @@ class ReportsExport implements ISimpleCsvExporter
                 $report->worker,
                 $report->errorTypeLabel(),
                 $report->error_note,
-                !empty($report->product_barcode) ? (env('AWS_ENDPOINT') . '/' . env('AWS_BUCKET') . '/' . $report->product_barcode) : '',
+                $this->s3Url($report->product_barcode),
                 $report->neighbor_barcode,
                 $report->ttnTypeLabel(),
                 $report->ttn_number,
-                !empty($report->product_photo) ? (env('AWS_ENDPOINT') . '/' . env('AWS_BUCKET') . '/' . $report->product_photo) : '',
-                !empty($report->office_id_photo) ? (env('AWS_ENDPOINT') . '/' . env('AWS_BUCKET') . '/' . $report->office_id_photo) : '',
+                $this->s3Url($report->product_photo),
+                $this->s3Url($report->office_id_photo),
             ];
 
             $data[] = $row;
         }
         return $data;
+    }
+
+    /**
+     * Полный публичный URL файла в s3 (через конфиг диска — не ломается из-за config:cache).
+     */
+    private function s3Url(?string $path): string
+    {
+        return !empty($path) ? Storage::disk('s3')->url($path) : '';
     }
 }
