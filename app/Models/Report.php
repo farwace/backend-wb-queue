@@ -160,10 +160,29 @@ class Report extends Model{
         if (!$this->qr_mismatch) {
             return '';
         }
+        return '<span class="text-warning fw-bold">⚠️ Расхождение ШК!</span>';
+    }
+
+    /**
+     * Колонка «ШК»: коды, распознанные сервером с фото (JSON в qr_server_values).
+     */
+    public function qrServerValuesHtml(): string
+    {
         $server = json_decode((string)$this->qr_server_values, true) ?: [];
-        $serverText = implode(', ', array_map(fn ($v) => (string)$v, $server));
-        return '<span class="text-warning fw-bold">⚠️ Расхождение ШК!</span>'
-            . '<div class="small">Сервер: <code>' . e($serverText) . '</code></div>';
+        if ($server === []) {
+            return '<span class="text-muted">—</span>';
+        }
+        $labels = [
+            'product_barcode' => 'товар',
+            'product_barcode_1' => '№1',
+            'product_barcode_2' => '№2',
+        ];
+        $lines = [];
+        foreach ($server as $field => $value) {
+            $label = $labels[$field] ?? $field;
+            $lines[] = e($label) . ': <code>' . e($value) . '</code>';
+        }
+        return implode('<br>', $lines);
     }
 
     /**

@@ -61,6 +61,12 @@ class ReportsCrudController extends CrudController
     {
         $this->crud->addButton('top', 'export', 'model_function', 'exportButtonContent');
 
+        // Компактная колонка «Действия»: стандартные кнопки заменены на их иконочные версии
+        // (same names → addButton заменяет show/update/delete из конфига Backpack)
+        $this->crud->addButton('line', 'show', 'view', 'admin.buttons.list.show');
+        $this->crud->addButton('line', 'update', 'view', 'admin.buttons.list.update');
+        $this->crud->addButton('line', 'delete', 'view', 'admin.buttons.list.delete');
+
         $this->crud->column('id')->type('number')->label('#ID');
 
         $this->crud->addColumn([
@@ -148,9 +154,16 @@ HTML;
         $this->crud->addColumn([
             'name' => 'qr_mismatch',
             'type' => 'closure',
-            'label' => 'Расхождение ШК',
+            'label' => 'РАСХ',
             'escaped' => false,
             'function' => fn ($entry) => $entry->qrMismatchHtml(),
+        ]);
+        $this->crud->addColumn([
+            'name' => 'qr_server_values',
+            'type' => 'closure',
+            'label' => 'ШК',
+            'escaped' => false,
+            'function' => fn ($entry) => $entry->qrServerValuesHtml(),
         ]);
         $this->crud->addColumn([
             'name' => 'error_note',
@@ -214,24 +227,8 @@ HTML;
 
     protected function setupShowOperation()
     {
+        // Колонки (включая «РАСХ» и «ШК» с серверными кодами) наследуются из списка
        $this->setupListOperation();
-        // Детальная страница: показываем, что сервер распознал на фото (в т.ч. при расхождении)
-        $this->crud->addColumn([
-            'name' => 'qr_server_values',
-            'type' => 'closure',
-            'label' => 'ШК, распознанные сервером',
-            'function' => function ($entry) {
-                $server = json_decode((string)$entry->qr_server_values, true) ?: [];
-                if ($server === []) {
-                    return e('— (серверу не удалось распознать QR)');
-                }
-                $lines = [];
-                foreach ($server as $field => $value) {
-                    $lines[] = e($field) . ': ' . e($value);
-                }
-                return implode("\n", $lines);
-            },
-        ]);
     }
 
     protected function setupCreateOperation(){
