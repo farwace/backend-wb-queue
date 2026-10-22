@@ -27,19 +27,17 @@ class ApiController extends ReportsReplyController
 
         $report = new Report();
         $report->worker = $request->validated('worker');
-        $report->name = $request->validated('name');
-        $report->square = $request->validated('square');
         $report->error_type = $request->validated('error_type');
         $report->error_note = $request->validated('error_note');
-        $report->product_barcode = $request->validated('product_barcode');
         $report->neighbor_barcode = $request->validated('neighbor_barcode');
         $report->ttn_type = $request->validated('ttn_type');
         $report->ttn_number = $request->validated('ttn_number');
         $report->department_id = $direction->id;
 
-        // Загрузка фото (product_photo — «Фото товара», office_id_photo — «ID Офиса»).
-        // Обязательность зависит от типа ошибки и проверяется в SubmitReportRequest.
-        foreach (['product_photo', 'office_id_photo'] as $photoField) {
+        // Загрузка фото (product_barcode — «ID (ШК) товара», product_photo — «Фото товара»,
+        // office_id_photo — «Фото ошибки с ТСД»). Обязательность зависит от типа ошибки
+        // и проверяется в SubmitReportRequest.
+        foreach (['product_barcode', 'product_photo', 'office_id_photo'] as $photoField) {
             /** @var UploadedFile|null $photo */
             $photo = $request->file($photoField);
             if ($photo) {

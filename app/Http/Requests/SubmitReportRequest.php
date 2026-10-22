@@ -16,27 +16,25 @@ class SubmitReportRequest extends FormRequest{
     {
         return [
             'worker' => 'required|string',
-            'name' => 'required|string',
-            'square' => 'required|string',
             'error_type' => 'required|in:' . implode(',', array_keys(Report::ERROR_TYPES)),
 
             // «Другая причина» — обязательен текст
             'error_note' => 'required_if:error_type,other|string',
 
-            // ID (ШК) товара — для «Товар не в заказе» и «Неверный офис»
-            'product_barcode' => 'required_if:error_type,not_in_order,office_error|nullable|string',
+            // ID (ШК) товара — фото, для «Товар не в заказе» и «Неверный офис»
+            'product_barcode' => 'required_if:error_type,not_in_order,office_error|nullable|file|image|mimes:jpg,jpeg,png,webp|max:10240',
 
             // Соседний ID (ШК) с поступления — для «Без ID (ШК)»
             'neighbor_barcode' => 'required_if:error_type,no_barcode|nullable|string',
 
-            // ТТН + номер — для «Товар не в заказе» и «Без ID (ШК)»
-            'ttn_type' => 'required_if:error_type,not_in_order,no_barcode|nullable|in:' . implode(',', array_keys(Report::TTN_TYPES)),
-            'ttn_number' => 'required_if:error_type,not_in_order,no_barcode|nullable|regex:/^\d+$/',
+            // ТТН + номер — для «Без ID (ШК)»
+            'ttn_type' => 'required_if:error_type,no_barcode|nullable|in:' . implode(',', array_keys(Report::TTN_TYPES)),
+            'ttn_number' => 'required_if:error_type,no_barcode|nullable|regex:/^\d+$/',
 
             // Фото товара — для «Товар не в заказе», «Неверный офис», «Без ID (ШК)»
             'product_photo' => 'required_if:error_type,not_in_order,office_error,no_barcode|nullable|file|image|mimes:jpg,jpeg,png,webp|max:10240',
 
-            // Фото «ID Офиса» — только для «Неверный офис»
+            // Фото «Ошибка с ТСД» — только для «Неверный офис»
             'office_id_photo' => 'required_if:error_type,office_error|nullable|file|image|mimes:jpg,jpeg,png,webp|max:10240',
         ];
     }
@@ -45,8 +43,6 @@ class SubmitReportRequest extends FormRequest{
     {
         return [
             'worker' => '«ID сотрудника»',
-            'name' => '«Имя»',
-            'square' => '«Квадрат сотрудника»',
             'error_type' => '«Ошибка»',
             'error_note' => '«Другая причина»',
             'product_barcode' => '«ID (ШК) товара»',

@@ -15,11 +15,11 @@ use Illuminate\Support\Facades\Storage;
  * @property Department $department
  * @property ?int $department_id
  * @property ?string $worker          ID сотрудника (номер бейджа)
- * @property ?string $name            Имя сотрудника
- * @property ?string $square          квадрат сотрудника
+ * @property ?string $name            [не используется в форме] имя сотрудника
+ * @property ?string $square          [не используется в форме] квадрат сотрудника
  * @property ?string $error_type      not_in_order|office_error|no_barcode|other
  * @property ?string $error_note      текст для «Другая причина»
- * @property ?string $product_barcode ID (ШК) товара
+ * @property ?string $product_barcode путь к фото «ID (ШК) товара»
  * @property ?string $neighbor_barcode соседний ID (ШК) с поступления (для «Без ID (ШК)»)
  * @property ?string $ttn_type        wb_gi|wb_mp|grid_number
  * @property ?string $ttn_number      номер ТТН (только цифры)
@@ -54,7 +54,7 @@ class Report extends Model{
     protected static function booted()
     {
         static::deleting(function (Report $report) {
-            foreach (['product_photo', 'office_id_photo'] as $field) {
+            foreach (['product_barcode', 'product_photo', 'office_id_photo'] as $field) {
                 if (!empty($report->$field) && Storage::disk('s3')->exists($report->$field)) {
                     Storage::disk('s3')->delete($report->$field);
                 }
@@ -101,6 +101,14 @@ class Report extends Model{
         $url = Storage::disk('s3')->url($path);
         $safe = e($url);
         return '<a href="' . $safe . '" target="_blank"><img src="' . $safe . '" height="40" style="border-radius:4px;" alt="фото"></a>';
+    }
+
+    /**
+     * Колонка списка: миниатюра фото «ID (ШК) товара».
+     */
+    public function productBarcodePhotoHtml(): string
+    {
+        return $this->photoHtml($this->product_barcode);
     }
 
     /**

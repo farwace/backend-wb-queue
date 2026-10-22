@@ -77,16 +77,6 @@ class ReportsCrudController extends CrudController
             'label' => 'ID сотрудника',
         ]);
         $this->crud->addColumn([
-            'name' => 'name',
-            'type' => 'text',
-            'label' => 'Имя',
-        ]);
-        $this->crud->addColumn([
-            'name' => 'square',
-            'type' => 'text',
-            'label' => 'Квадрат сотрудника',
-        ]);
-        $this->crud->addColumn([
             'name' => 'error_type',
             'type' => 'closure',
             'label' => 'Ошибка',
@@ -101,8 +91,10 @@ class ReportsCrudController extends CrudController
         ]);
         $this->crud->addColumn([
             'name' => 'product_barcode',
-            'type' => 'text',
+            'type' => 'closure',
             'label' => 'ID (ШК) товара',
+            'escaped' => false,
+            'function' => fn ($entry) => $entry->productBarcodePhotoHtml(),
         ]);
         $this->crud->addColumn([
             'name' => 'neighbor_barcode',
@@ -146,14 +138,12 @@ class ReportsCrudController extends CrudController
     protected function setupCreateOperation(){
         $this->crud->setValidationFromArray([
             'worker' => 'required|string',
-            'name' => 'required|string',
-            'square' => 'required|string',
             'error_type' => 'required|in:' . implode(',', array_keys(Report::ERROR_TYPES)),
             'error_note' => 'required_if:error_type,other|string',
-            'product_barcode' => 'required_if:error_type,not_in_order,office_error|nullable|string',
+            'product_barcode' => 'required_if:error_type,not_in_order,office_error|nullable|image',
             'neighbor_barcode' => 'required_if:error_type,no_barcode|nullable|string',
-            'ttn_type' => 'required_if:error_type,not_in_order,no_barcode|nullable|in:' . implode(',', array_keys(Report::TTN_TYPES)),
-            'ttn_number' => 'required_if:error_type,not_in_order,no_barcode|nullable|regex:/^\d+$/',
+            'ttn_type' => 'required_if:error_type,no_barcode|nullable|in:' . implode(',', array_keys(Report::TTN_TYPES)),
+            'ttn_number' => 'required_if:error_type,no_barcode|nullable|regex:/^\d+$/',
             'product_photo' => 'required_if:error_type,not_in_order,office_error,no_barcode|nullable|image',
             'office_id_photo' => 'required_if:error_type,office_error|nullable|image',
         ]);
@@ -173,16 +163,6 @@ class ReportsCrudController extends CrudController
             'label' => 'ID сотрудника',
         ]);
         $this->crud->addField([
-            'name' => 'name',
-            'type' => 'text',
-            'label' => 'Имя',
-        ]);
-        $this->crud->addField([
-            'name' => 'square',
-            'type' => 'text',
-            'label' => 'Квадрат сотрудника',
-        ]);
-        $this->crud->addField([
             'name' => 'error_type',
             'type' => 'select_from_array',
             'label' => 'Ошибка',
@@ -197,8 +177,10 @@ class ReportsCrudController extends CrudController
         ]);
         $this->crud->addField([
             'name' => 'product_barcode',
-            'type' => 'text',
-            'label' => 'ID (ШК) товара',
+            'type' => 'upload',
+            'label' => 'ID (ШК) товара (фото)',
+            'disk' => 's3',
+            'prefix' => 'reports-photos',
             'hint' => 'Для «Товар не в заказе» / «Неверный офис»',
         ]);
         $this->crud->addField([
@@ -213,7 +195,7 @@ class ReportsCrudController extends CrudController
             'label' => 'ТТН',
             'options' => Report::TTN_TYPES,
             'placeholder' => '— выберите ТТН —',
-            'hint' => 'Для «Товар не в заказе» / «Без ID (ШК)»',
+            'hint' => 'Для «Без ID (ШК)»',
         ]);
         $this->crud->addField([
             'name' => 'ttn_number',
@@ -250,8 +232,8 @@ class ReportsCrudController extends CrudController
         error_note: ['other'],
         product_barcode: ['not_in_order', 'office_error'],
         neighbor_barcode: ['no_barcode'],
-        ttn_type: ['not_in_order', 'no_barcode'],
-        ttn_number: ['not_in_order', 'no_barcode'],
+        ttn_type: ['no_barcode'],
+        ttn_number: ['no_barcode'],
         product_photo: ['not_in_order', 'office_error', 'no_barcode'],
         office_id_photo: ['office_error']
     };
