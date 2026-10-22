@@ -124,15 +124,17 @@ class ReportsCrudController extends CrudController
         ]);
         $this->crud->addColumn([
             'name' => 'product_photo',
-            'type' => 'model_function',
+            'type' => 'closure',
             'label' => 'Фото товара',
-            'function_name' => 'productPhotoHtml',
+            'escaped' => false,
+            'function' => fn ($entry) => $entry->productPhotoHtml(),
         ]);
         $this->crud->addColumn([
             'name' => 'office_id_photo',
-            'type' => 'model_function',
+            'type' => 'closure',
             'label' => 'Фото ошибки с ТСД',
-            'function_name' => 'officeIdPhotoHtml',
+            'escaped' => false,
+            'function' => fn ($entry) => $entry->officeIdPhotoHtml(),
         ]);
     }
 
